@@ -1,17 +1,20 @@
 import { TanstackDevtools } from '@tanstack/react-devtools'
 import {
   HeadContent,
+  Outlet,
   Scripts,
   createRootRouteWithContext,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 
-import Header from '../components/Header'
 
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
 
 import appCss from '../styles.css?url'
 
+import GlobalHeader from '@/components/Header'
+import { ThemeProvider } from '@/components/ThemeProvider'
+import { getThemeServerFn } from '@/lib/theme'
 import type { QueryClient } from '@tanstack/react-query'
 
 interface MyRouterContext {
@@ -39,18 +42,29 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       },
     ],
   }),
-
-  shellComponent: RootDocument,
+  loader: () => getThemeServerFn(),
+  shellComponent: RootComponent,
 })
+
+function RootComponent() {
+  const data = Route.useLoaderData()
+  return (
+    <ThemeProvider theme={data}>
+      <RootDocument>
+        <Outlet />
+      </RootDocument>
+    </ThemeProvider>
+  )
+}
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="de" className='dark'>
       <head>
         <HeadContent />
       </head>
       <body>
-        <Header />
+        <GlobalHeader />
         {children}
         <TanstackDevtools
           config={{
