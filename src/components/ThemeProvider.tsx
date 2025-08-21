@@ -1,40 +1,61 @@
-import { setThemeServerFn } from "@/lib/theme"
-import { useRouter } from "@tanstack/react-router"
+import { useSuspenseQuery } from "@tanstack/react-query"
+import { createServerFn } from "@tanstack/react-start"
+import { getCookie, setCookie } from "@tanstack/react-start/server"
 import { createContext, useContext, useEffect } from "react"
+import { z } from "zod"
 
-export type Theme = "dark" | "light" | "system"
+type Theme = "dark" | "light" | "system"
 
 type ThemeProviderProps = {
   children: React.ReactNode
-  theme?: Theme
 }
 
-type ThemeProviderState = {
-  theme: Theme
-  setTheme: (theme: Theme) => void
-}
+type ThemeProviderState = { theme: Theme, setTheme: (theme: Theme) => void }
+
+const THEME_COOKIE_NAME = "ui-theme"
 
 const initialState: ThemeProviderState = {
-  theme: "dark",
+  theme: "system",
   setTheme: () => null,
 }
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState)
 
-export function ThemeProvider({
-  children,
-  theme = "dark",
-  ...props
-}: ThemeProviderProps) {
-  const router = useRouter()
+export const getThemeFn = createServerFn().handler(async () => {
+  const theme = getCookie(THEME_COOKIE_NAME)
+  return theme ?? "system"
+})
 
-  async function setTheme(theme: Theme) {
-    await setThemeServerFn({ data: theme })
-    await router.invalidate()
-  }
+export const setThemeFn = createServerFn({ method: "POST" })
+  .validator(z.object({ theme: z.enum(["dark", "light", "system"]) }))
+  .handler(async ({ data }) => {
+    setCookie(THEME_COOKIE_NAME, data.theme)
+    return data.theme
+  })
+
+export function ThemeProvider({ children }: ThemeProviderProps) {
+  const { data, refetch } = useSuspenseQuery({
+    queryKey: ["theme"],
+    queryFn: () => getThemeFn(),
+  })
 
   useEffect(() => {
+    window
+      .matchMedia("(prefers-color-scheme: dark)")
+      .addEventListener("change", (event) => {
+        if (data === "system") {
+          const newColorScheme = event.matches ? "dark" : "light"
+          const root = window.document.documentElement
+          root.classList.remove("light", "dark")
+          root.classList.add(newColorScheme)
+        }
+      })
+  }, [data])
+
+  useEffect(() => {
+    const theme = data as Theme
     const root = window.document.documentElement
+
     root.classList.remove("light", "dark")
 
     if (theme === "system") {
@@ -48,15 +69,19 @@ export function ThemeProvider({
     }
 
     root.classList.add(theme)
-  }, [theme])
+  }, [data])
 
   const value = {
-    theme,
-    setTheme,
+    theme: data as Theme,
+    setTheme: (theme: Theme) => {
+      setThemeFn({ data: { theme } }).then(() => {
+        refetch()
+      })
+    },
   }
 
   return (
-    <ThemeProviderContext.Provider {...props} value={value}>
+    <ThemeProviderContext.Provider value={value}>
       {children}
     </ThemeProviderContext.Provider>
   )
