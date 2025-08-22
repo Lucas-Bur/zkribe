@@ -146,7 +146,7 @@ function App() {
   }
 
   return (
-    <div className="p-4 min-h-[calc(100vh-65px)] bg-background">
+    <div className="p-4 min-h-[calc(100vh-65px)]">
       <div className="grid gap-6 md:grid-cols-2">
         <FileUpload
           file={file}

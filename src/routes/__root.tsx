@@ -101,6 +101,16 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <ThemeProvider>
+          <div
+            className="pointer-events-none absolute inset-0 opacity-15 dark:opacity-5 z-[-10]"
+            style={{
+              backgroundImage: `url('data:image/svg+xml;utf8,\
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128">\
+<filter id="n" x="0" y="0" width="100%" height="100%">\
+<feTurbulence type="fractalNoise" baseFrequency="15.4" numOctaves="1"/>\
+</filter><rect width="128" height="128" filter="url(%23n)"/></svg>')`
+            }}
+          />
           <GlobalHeader />
           {children}
           <TanstackDevtools
@@ -118,6 +128,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           <Scripts />
         </ThemeProvider>
       </body>
-    </html>
+    </html >
   )
 }
