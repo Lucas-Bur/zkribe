@@ -13,7 +13,7 @@ export default function GlobalHeader() {
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 500 500"
-              className="inline-block size-6 mr-2"
+              className="inline-block size-6 mr-2 transition-all duration-300 hover:scale-110 hover:animate-wiggle"
             >
               <path
                 transform="translate(-8,-15) scale(1.05,1.05)"
