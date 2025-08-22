@@ -132,9 +132,26 @@ function App() {
   }
 
   const downloadTranscription = () => {
-    const blob = new Blob([transcriptionResult?.transcription || ''], {
-      type: 'text/plain',
+    if (!transcriptionResult?.transcription) {
+      console.warn('Keine Transkriptionsdaten zum Herunterladen.')
+      return
+    }
+
+    const { segments } = transcriptionResult.transcription
+    let formattedText = ''
+
+    // Wir können hier entscheiden, wie wir den Text formatieren wollen.
+    // Eine einfache, lesbare Version könnte so aussehen:
+    segments.forEach((segment) => {
+      // Füge Sprecher- und Segment-ID hinzu, wenn vorhanden
+      const speakerInfo = segment.speaker ? `${segment.speaker}: ` : ''
+      const segmentId = segment.id !== undefined ? `[#${segment.id}] ` : ''
+      const typeInfo =
+        segment.type && segment.type !== 'speech' ? `[${segment.type.replace('_', ' ')}] ` : ''
+
+      formattedText += `${speakerInfo}${segmentId}${typeInfo}${segment.text}\n\n`
     })
+    const blob = new Blob([formattedText], { type: 'text/plain;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
