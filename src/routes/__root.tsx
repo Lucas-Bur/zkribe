@@ -102,7 +102,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <body>
         <ThemeProvider>
           <div
-            className="pointer-events-none absolute inset-0 opacity-15 dark:opacity-5 z-[-10]"
+            className="pointer-events-none fixed opacity-15 dark:opacity-5 z-[-10] h-full w-full"
             style={{
               backgroundImage: `url('data:image/svg+xml;utf8,\
 <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128">\
