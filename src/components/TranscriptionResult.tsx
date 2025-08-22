@@ -29,7 +29,7 @@ export function TranscriptionResults({
       <CardContent className="space-y-4">
         {transcription ? (
           <div className="space-y-4">
-            <div className="bg-card border border-border shadow-sm p-4 rounded-lg max-h-96 overflow-y-auto">
+            <div className="bg-card border border-border shadow-xs p-4 rounded-lg max-h-96 overflow-y-auto">
               <p className="text-foreground whitespace-pre-wrap leading-relaxed">
                 {transcription}
               </p>
