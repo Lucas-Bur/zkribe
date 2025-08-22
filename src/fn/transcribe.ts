@@ -292,6 +292,131 @@ function isNonStreamingChoice(
   return typeof (choice as any).message === 'object'
 }
 
+// === Structured Output Schema für Transkription ===
+export const StructuredTranscriptionOutputSchema = z.object({
+  segments:
+    z.object({
+      id: z.number().int().describe('Unique identifier for the transcription segment. Increments by 1 for each segment.'),
+      speaker: z
+        .string()
+        .describe(
+          'The identified speaker for this segment (e.g., "Speaker 1", "Speaker 2").',
+        ),
+      text: z
+        .string()
+        .describe('The transcribed text content of this segment.'),
+      type: z
+        .enum(['speech', 'background_noise', 'music', 'inaudible'])
+        .describe('Type of content in the segment (e.g., speech, background noise).'),
+    }).array()
+      .describe('An ordered array of transcription segments.')
+}).describe(
+  'Structured transcription output containing segments with speaker identification and content type.',
+)
+
+export type StructuredTranscriptionOutput = z.infer<
+  typeof StructuredTranscriptionOutputSchema
+>
+
+function zodToJsonSchema(schema: z.ZodType<any>): object {
+  // Wenn es sich um ein ZodObject handelt
+  if (schema instanceof z.ZodObject) {
+    const properties: { [key: string]: any } = {}
+    const required: string[] = []
+
+    for (const key in schema.shape) {
+      const field = schema.shape[key]
+      const description = field._def.description || undefined
+
+      // Bestimme, ob das Feld optional ist
+      const isOptional =
+        field instanceof z.ZodOptional || field instanceof z.ZodDefault
+
+      // Rekursiver Aufruf für den "inneren" Typ, wenn es optional ist, sonst für das Feld selbst
+      const innerSchema = isOptional ? field._def.innerType : field
+      properties[key] = {
+        ...(zodToJsonSchema(innerSchema) as object),
+        description, // Beschreibung hinzufügen
+      }
+
+      // Füge nur zu 'required' hinzu, wenn es nicht optional ist
+      if (!isOptional) {
+        required.push(key)
+      }
+    }
+
+    return {
+      type: 'object',
+      properties,
+      ...(required.length > 0 && { required }), // 'required' nur hinzufügen, wenn es Elemente gibt
+      additionalProperties: false,
+    }
+  }
+
+  // Wenn es sich um ein ZodArray handelt
+  if (schema instanceof z.ZodArray) {
+    const elementType = schema.element // Das Schema der Array-Elemente
+    return {
+      type: 'array',
+      items: zodToJsonSchema(elementType), // Rekursiver Aufruf für die Array-Elemente
+    }
+  }
+
+  // Wenn es sich um einen ZodEnum handelt
+  if (schema instanceof z.ZodEnum) {
+    return {
+      type: 'string',
+      enum: schema.options, // Enum-Optionen direkt übernehmen
+    }
+  }
+
+  // Für primitive Typen und spezielle Zod-Typen
+  if (schema instanceof z.ZodString) {
+    const jsonSchema: { type: string; format?: string; pattern?: string } = {
+      type: 'string',
+    }
+    if (schema._def.checks) {
+      for (const check of schema._def.checks) {
+        if (check.kind === 'datetime') {
+          jsonSchema.format = 'date-time'
+        } else if (check.kind === 'regex') {
+          jsonSchema.pattern = check.regex.source
+        }
+        // Weitere Checks wie minLength, maxLength können hier auch als JSON-Schema validierung hinzugefügt werden
+      }
+    }
+    return jsonSchema
+  }
+  if (schema instanceof z.ZodNumber) {
+    let jsonSchema: {
+      type: string
+      minimum?: number
+      maximum?: number
+      multipleOf?: number
+    } = {
+      type: 'number',
+    } // Standardmäßig 'number'
+
+    if (schema._def.checks) {
+      for (const check of schema._def.checks) {
+        if (check.kind === 'int') {
+          jsonSchema.type = 'integer' // <-- Hier wird der Typ korrekt auf 'integer' gesetzt
+        } else if (check.kind === 'min') {
+          jsonSchema.minimum = check.value
+        } else if (check.kind === 'max') {
+          jsonSchema.maximum = check.value
+        }
+      }
+    }
+    return jsonSchema
+  }
+  if (schema instanceof z.ZodBoolean) return { type: 'boolean' }
+
+  // Fallback für nicht unterstützte Typen oder wenn ein Basistyp nicht erkannt wird
+  console.warn(`Unsupported Zod type encountered: ${schema.constructor.name}`)
+  return { type: 'object' } // Oder ein spezifischerer Fehler/Typ
+}
+
 async function transcribeWithGemini(
   buffer: Buffer,
   language: string,
@@ -332,6 +457,16 @@ async function transcribeWithGemini(
       usage: {
         include: true,
       },
+      response_format: {
+        type: 'json_schema',
+        json_schema: {
+          name: 'transcription_output',
+          strict: true,
+          schema: zodToJsonSchema(
+            StructuredTranscriptionOutputSchema,
+          ),
+        },
+      },
     }),
   })
 
@@ -346,29 +481,28 @@ async function transcribeWithGemini(
     console.error('OpenRouter API error:', errorMessage)
     throw new Error(errorMessage)
   }
-
   const json = await resp.json()
   const {
-    success,
-    data: parsed,
-    error,
+    success: responseSuccess,
+    data: responseData,
+    error: responseError,
   } = OpenRouterResponseSchema.safeParse(json)
 
-  if (!success) {
-    console.error('Failed to parse OpenRouter response:', error)
+  if (!responseSuccess) {
+    console.error('Failed to parse OpenRouter response:', responseError)
     throw new Error('Failed to parse OpenRouter response')
   }
 
-  if (!parsed.choices || parsed.choices.length === 0) {
+  if (!responseData.choices || responseData.choices.length === 0) {
     console.error('No choices returned in OpenRouter response')
-    console.dir(parsed)
+    console.dir(responseData)
     throw new Error('No choices returned in OpenRouter response')
   }
 
-  const firstChoice = parsed.choices[0]!
+  const firstChoice = responseData.choices[0]!
 
   if (firstChoice.error) {
-    console.error('OpenRouter error:', parsed.choices[0]!.error)
+    console.error('OpenRouter error:', responseData.choices[0]!.error)
     throw new Error(firstChoice.error.message)
   }
 
@@ -384,10 +518,17 @@ async function transcribeWithGemini(
     throw new Error('No content in OpenRouter response message')
   }
 
+  const { success: structuredSuccess, data: structuredData, error: structuredError } = StructuredTranscriptionOutputSchema.safeParse(JSON.parse(content))
+
+  if (!structuredSuccess) {
+    console.error('Failed to parse transcription output:', structuredError)
+    throw new Error('Failed to parse transcription output')
+  }
+
   return {
-    transcription: content,
-    generationId: parsed.id,
-    usage: parsed.usage,
-    provider: parsed.provider,
+    transcription: structuredData,
+    generationId: responseData.id,
+    usage: responseData.usage,
+    provider: responseData.provider,
   }
 }
