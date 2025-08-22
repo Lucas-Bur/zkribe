@@ -111,41 +111,6 @@ ${fillerWordInstructions}
 Begin transcription:`
 }
 
-// async function transcribeWithGeminiNOTWORKING(buffer: Buffer, language: string, removeFillerWords = true) {
-//   const base64Audio = buffer.toString("base64")
-
-//   const result = await generateText({
-//     model: gemini2flash,
-//     maxOutputTokens: 4000,
-//     temperature: 0,
-//     messages: [
-//       {
-//         role: "user",
-//         content: [
-//           {
-//             type: "text",
-//             text: getOptimizedTranscriptionPrompt({ language, removeFillerWords }),
-//           },
-//           {
-//             type: "text",
-//             text: base64Audio,
-//           },
-//         ],
-//       },
-//     ],
-//   })
-
-//   console.dir(result)
-
-//   const { providerMetadata, text, usage, totalUsage } = result
-
-//   console.log("providerMetadata", providerMetadata)
-//   console.log("text", text)
-//   console.log("usage", usage)
-//   console.log("totalUsage", totalUsage)
-// }
-
-
 /** === Shared Subschemas === */
 const TextContent = z.object({
   type: z.literal("text"),
@@ -305,15 +270,13 @@ export const OpenRouterResponseSchema = z.object({
 export type OpenRouterRequest = z.infer<typeof OpenRouterRequestSchema>
 export type OpenRouterResponse = z.infer<typeof OpenRouterResponseSchema>
 
-type ParsedResponse = z.infer<typeof OpenRouterResponseSchema>
 type NonStreamingChoice = Extract<
-  ParsedResponse["choices"][number],
+  OpenRouterResponse["choices"][number],
   { message: unknown }
 >
 
-
 function isNonStreamingChoice(
-  choice: ParsedResponse["choices"][number]
+  choice: OpenRouterResponse["choices"][number]
 ): choice is NonStreamingChoice {
   return typeof (choice as any).message === "object"
 }
@@ -380,20 +343,15 @@ async function transcribeWithGemini(
   const json = await resp.json()
   const { success, data: parsed, error } = OpenRouterResponseSchema.safeParse(json)
 
-  console.log("Parsed OpenRouter data:", JSON.stringify(json, null, 2))
-
   if (!success) {
     console.error("Failed to parse OpenRouter response:", error)
     throw new Error("Failed to parse OpenRouter response")
   }
 
   if (!parsed.choices || parsed.choices.length === 0) {
-    console.warn("No choices returned in OpenRouter response")
+    console.error("No choices returned in OpenRouter response")
     console.dir(parsed)
-    return {
-      transcription: "No transcription available",
-      generationId: null,
-    }
+    throw new Error("No choices returned in OpenRouter response")
   }
 
   const firstChoice = parsed.choices[0]!
@@ -411,80 +369,13 @@ async function transcribeWithGemini(
   const content = firstChoice.message.content
 
   if (!content) {
-    console.warn("No content in OpenRouter response message")
-    return {
-      transcription: "No transcription available",
-      generationId: parsed.id,
-    }
+    console.error("No content in OpenRouter response message")
+    throw new Error("No content in OpenRouter response message")
   }
 
   return {
     transcription: content,
     generationId: parsed.id,
     usage: parsed.usage
-  }
-}
-
-
-
-async function transcribeWithGeminiOld(buffer: Buffer, language: string, removeFillerWords = true) {
-  const base64Audio = buffer.toString("base64")
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${env.OPENROUTER_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "google/gemini-2.0-flash-001:floor",
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: getOptimizedTranscriptionPrompt({ language, removeFillerWords }),
-            },
-            {
-              type: "input_audio",
-              input_audio: {
-                data: base64Audio,
-                format: "mp3",
-              },
-            },
-          ],
-        },
-      ],
-      temperature: 0,
-      usage: {
-        include: true
-      }
-    }),
-  })
-
-  if (!response.ok) {
-    let errorMessage = `HTTP ${response.status}: ${response.statusText}`
-    try {
-      const errorData = await response.json()
-      errorMessage = errorData.error?.message || errorData.message || errorMessage
-    } catch (jsonError) {
-      try {
-        const errorText = await response.text()
-        errorMessage = errorText || errorMessage
-      } catch (textError) {
-        // Keep the default HTTP error message
-      }
-    }
-    console.error("OpenRouter API error:", errorMessage)
-  }
-
-  const data = await response.json()
-
-  console.log("Parsed OpenRouter data:", JSON.stringify(data, null, 2))
-  const transcription = data.choices?.[0]?.message?.content || "No transcription available"
-
-  return {
-    transcription,
-    generationId: data.id || null,
   }
 }

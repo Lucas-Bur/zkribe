@@ -8,13 +8,15 @@ export const Route = createFileRoute('/')({
   component: App,
 })
 
+type TranscriptionResponse = Awaited<ReturnType<typeof getTranscriptionFn>> | null
+
 function App() {
 
   const [file, setFile] = useState<File | null>(null)
   const [processedFile, setProcessedFile] = useState<File | null>(null)
   const [isTranscribing, setIsTranscribing] = useState(false)
   const [isConverting, setIsConverting] = useState(false)
-  const [transcription, setTranscription] = useState<string>("")
+  const [transcriptionResult, setTranscriptionResult] = useState<TranscriptionResponse>(null)
   const [error, setError] = useState<string>("")
   const [originalAudioUrl, setOriginalAudioUrl] = useState<string>("")
   const [processedAudioUrl, setProcessedAudioUrl] = useState<string>("")
@@ -34,14 +36,14 @@ function App() {
       ) {
         setFile(selectedFile)
         setError("")
-        setTranscription("")
+        setTranscriptionResult(null)
 
         const originalUrl = URL.createObjectURL(selectedFile)
         setOriginalAudioUrl(originalUrl)
         setProcessedAudioUrl("")
         setProcessedFile(null)
-
         setIsConverting(true)
+
         try {
           const processedFile = await compressAudioToOptimizedMp3(selectedFile)
           setProcessedFile(processedFile)
@@ -108,7 +110,7 @@ function App() {
       formdata.append("language", selectedLanguage)
       formdata.append("removeFillerWords", removeFillerWords.valueOf().toString())
       const response = await getTranscriptionFn({ data: formdata })
-      setTranscription(response.transcription)
+      setTranscriptionResult(response)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Transcription error. Please try again.")
     } finally {

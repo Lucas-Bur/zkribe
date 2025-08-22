@@ -13,8 +13,8 @@ interface FileUploadProps {
   error: string
   isPlayingOriginal: boolean
   isPlayingProcessed: boolean
-  originalAudioRef: React.RefObject<HTMLAudioElement>
-  processedAudioRef: React.RefObject<HTMLAudioElement>
+  originalAudioRef: React.RefObject<HTMLAudioElement | null>
+  processedAudioRef: React.RefObject<HTMLAudioElement | null>
   onFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void
   onToggleOriginalPlayback: () => void
   onToggleProcessedPlayback: () => void
