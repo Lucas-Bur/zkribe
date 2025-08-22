@@ -1,6 +1,9 @@
-import * as lamejs from "@breezystack/lamejs"
+import * as lamejs from '@breezystack/lamejs'
 
-export const audioBufferToMp3Blob = (audioBuffer: AudioBuffer, bitrate = 64): Blob => {
+export const audioBufferToMp3Blob = (
+  audioBuffer: AudioBuffer,
+  bitrate = 64,
+): Blob => {
   try {
     const samples = audioBuffer.getChannelData(0)
 
@@ -10,8 +13,8 @@ export const audioBufferToMp3Blob = (audioBuffer: AudioBuffer, bitrate = 64): Bl
     for (let i = 0; i < samples.length; i++) {
       const sample = samples[i]
       if (sample === undefined) {
-        console.error("❌ Sample at index", i, "is undefined")
-        throw new Error("Sample at index " + i + " is undefined")
+        console.error('❌ Sample at index', i, 'is undefined')
+        throw new Error('Sample at index ' + i + ' is undefined')
       }
       int16Samples[i] = Math.max(-1, Math.min(1, sample)) * scalingFactor
     }
@@ -20,7 +23,7 @@ export const audioBufferToMp3Blob = (audioBuffer: AudioBuffer, bitrate = 64): Bl
     try {
       encoder = new lamejs.Mp3Encoder(1, audioBuffer.sampleRate, bitrate)
     } catch (encoderError) {
-      console.error("❌ Failed to create Mp3Encoder:", encoderError)
+      console.error('❌ Failed to create Mp3Encoder:', encoderError)
       throw encoderError
     }
 
@@ -38,7 +41,10 @@ export const audioBufferToMp3Blob = (audioBuffer: AudioBuffer, bitrate = 64): Bl
         }
         processedChunks++
       } catch (chunkError) {
-        console.error(`❌ Error encoding chunk ${processedChunks + 1}:`, chunkError)
+        console.error(
+          `❌ Error encoding chunk ${processedChunks + 1}:`,
+          chunkError,
+        )
         throw chunkError
       }
     }
@@ -49,21 +55,23 @@ export const audioBufferToMp3Blob = (audioBuffer: AudioBuffer, bitrate = 64): Bl
         mp3Data.push(new Uint8Array(mp3buf))
       }
     } catch (flushError) {
-      console.error("❌ Error during flush:", flushError)
+      console.error('❌ Error during flush:', flushError)
       throw flushError
     }
 
-    const blob = new Blob(mp3Data as BlobPart[], { type: "audio/mp3" }) // as BlobPart[] is necessary for TypeScript compatibility. it works correctly at runtime
+    const blob = new Blob(mp3Data as BlobPart[], { type: 'audio/mp3' }) // as BlobPart[] is necessary for TypeScript compatibility. it works correctly at runtime
 
     return blob
   } catch (error) {
-    console.error("❌ Critical error in audioBufferToMp3Blob:", error)
+    console.error('❌ Critical error in audioBufferToMp3Blob:', error)
     throw error
   }
 }
 
-export const prepareAudio = async (audioBuffer: AudioBuffer, playbackRate = 1.0): Promise<AudioBuffer> => {
-
+export const prepareAudio = async (
+  audioBuffer: AudioBuffer,
+  playbackRate = 1.0,
+): Promise<AudioBuffer> => {
   const targetSampleRate = 16000
   const targetChannels = 1
 
@@ -76,16 +84,24 @@ export const prepareAudio = async (audioBuffer: AudioBuffer, playbackRate = 1.0)
   }
 
   try {
-    const newLength = Math.ceil((audioBuffer.length * targetSampleRate) / audioBuffer.sampleRate / playbackRate)
+    const newLength = Math.ceil(
+      (audioBuffer.length * targetSampleRate) /
+      audioBuffer.sampleRate /
+      playbackRate,
+    )
 
-    const offlineContext = new OfflineAudioContext(targetChannels, newLength, targetSampleRate)
+    const offlineContext = new OfflineAudioContext(
+      targetChannels,
+      newLength,
+      targetSampleRate,
+    )
 
     const source = offlineContext.createBufferSource()
     source.buffer = audioBuffer
     source.playbackRate.setValueAtTime(playbackRate, offlineContext.currentTime)
 
     const highPassFilter = offlineContext.createBiquadFilter()
-    highPassFilter.type = "highpass"
+    highPassFilter.type = 'highpass'
     highPassFilter.frequency.setValueAtTime(80, offlineContext.currentTime)
     highPassFilter.Q.setValueAtTime(0.707, offlineContext.currentTime)
 
@@ -105,7 +121,7 @@ export const prepareAudio = async (audioBuffer: AudioBuffer, playbackRate = 1.0)
 
     return renderedBuffer
   } catch (error) {
-    console.error("❌ Error in prepareAudio:", error)
+    console.error('❌ Error in prepareAudio:', error)
     throw error
   }
 }

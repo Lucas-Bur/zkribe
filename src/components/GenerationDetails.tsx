@@ -1,15 +1,19 @@
-import { Badge } from "@/components/ui/badge"
+import { Badge } from '@/components/ui/badge'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { Separator } from "@/components/ui/separator"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { Info } from "lucide-react"
+} from '@/components/ui/card'
+import { Progress } from '@/components/ui/progress'
+import { Separator } from '@/components/ui/separator'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+import { Info } from 'lucide-react'
 
 type GenerationDetailsProps = {
   prompt_tokens: number
@@ -32,7 +36,8 @@ export function GenerationDetailsCard({
   provider,
 }: GenerationDetailsProps) {
   const promptPct = total_tokens > 0 ? (prompt_tokens / total_tokens) * 100 : 0
-  const completionPct = total_tokens > 0 ? (completion_tokens / total_tokens) * 100 : 0
+  const completionPct =
+    total_tokens > 0 ? (completion_tokens / total_tokens) * 100 : 0
 
   return (
     <Card className="mt-6">
@@ -41,16 +46,16 @@ export function GenerationDetailsCard({
           <Info className="h-5 w-5 text-primary" />
           Generierungs­details
         </CardTitle>
-        <CardDescription>
-          Kosten & Tokenaufteilung
-        </CardDescription>
+        <CardDescription>Kosten & Tokenaufteilung</CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-6">
         {/* Progress Bar für Tokenverhältnis */}
         <div>
           <div className="flex justify-between mb-1">
-            <span className="text-sm font-medium text-foreground">Prompt vs. Completion</span>
+            <span className="text-sm font-medium text-foreground">
+              Prompt vs. Completion
+            </span>
             <Badge variant="secondary">
               {total_tokens.toLocaleString()} Total
             </Badge>
@@ -68,14 +73,14 @@ export function GenerationDetailsCard({
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {[
             {
-              label: "Prompt Tokens",
+              label: 'Prompt Tokens',
               value: prompt_tokens,
-              desc: "Enthält Audio- & Cached-Tokens",
+              desc: 'Enthält Audio- & Cached-Tokens',
             },
             {
-              label: "Audio Tokens",
+              label: 'Audio Tokens',
               value: audio_tokens,
-              desc: "Direkt aus der Audiodatei extrahiert",
+              desc: 'Direkt aus der Audiodatei extrahiert',
             },
             // {
             //   label: "Cached Tokens",
@@ -83,25 +88,25 @@ export function GenerationDetailsCard({
             //   desc: "Bereits bekannte Phrasen im Cache",
             // },
             {
-              label: "Completion Tokens",
+              label: 'Completion Tokens',
               value: completion_tokens,
-              desc: "Vom Modell generierte Tokens",
+              desc: 'Vom Modell generierte Tokens',
             },
             {
-              label: "Total Tokens",
+              label: 'Total Tokens',
               value: total_tokens,
-              desc: "Summe aller Tokens",
+              desc: 'Summe aller Tokens',
             },
             {
-              label: "Kosten",
+              label: 'Kosten',
               value: cost,
-              desc: "Genauer Betrag in USD",
+              desc: 'Genauer Betrag in USD',
               isCurrency: true,
             },
             {
-              label: "Provider",
+              label: 'Provider',
               value: provider,
-              desc: "Der Anbieter, der die Transkription durchgeführt hat",
+              desc: 'Der Anbieter, der die Transkription durchgeführt hat',
               isString: true,
             },
           ].map((stat) => (
@@ -111,13 +116,11 @@ export function GenerationDetailsCard({
                   <p className="text-2xl font-bold text-foreground">
                     {stat.isCurrency
                       ? `$${stat.value.toFixed(6)}`
-                      :
-                      stat.isString ? stat.value :
-                        stat.value.toLocaleString()}
+                      : stat.isString
+                        ? stat.value
+                        : stat.value.toLocaleString()}
                   </p>
-                  <p className="text-sm text-muted-foreground">
-                    {stat.label}
-                  </p>
+                  <p className="text-sm text-muted-foreground">{stat.label}</p>
                 </div>
               </TooltipTrigger>
               <TooltipContent side="top" align="center">

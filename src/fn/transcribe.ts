@@ -1,51 +1,61 @@
-import { env } from "@/env"
-import { createServerFn } from "@tanstack/react-start"
-import z from "zod"
+import { env } from '@/env'
+import { createServerFn } from '@tanstack/react-start'
+import z from 'zod'
 
 export const getTranscriptionFn = createServerFn({
-  method: "POST",
-  type: "dynamic",
-  response: "data"
+  method: 'POST',
+  type: 'dynamic',
+  response: 'data',
 })
   .validator((data: FormData) => {
-
-    const audio = data.get("audio")
-    const model = data.get("model")
-    const language = data.get("language")
-    const removeFillerWords = data.get("removeFillerWords")
+    const audio = data.get('audio')
+    const model = data.get('model')
+    const language = data.get('language')
+    const removeFillerWords = data.get('removeFillerWords')
 
     const parsedResult = z.object({
       audio: z.instanceof(File),
-      model: z.enum(["gemini-2.0-flash", "whisper-1"]),
-      language: z.enum(["auto", "de", "en", "es", "fr", "it", "pt", "ru", "ja", "ko", "zh"]),
+      model: z.enum(['gemini-2.0-flash', 'whisper-1']),
+      language: z.enum([
+        'auto',
+        'de',
+        'en',
+        'es',
+        'fr',
+        'it',
+        'pt',
+        'ru',
+        'ja',
+        'ko',
+        'zh',
+      ]),
       removeFillerWords: z.boolean(),
     })
     const parsedData = parsedResult.parse({
       audio,
       model,
       language,
-      removeFillerWords: removeFillerWords === "true",
+      removeFillerWords: removeFillerWords === 'true',
     })
     return parsedData
   })
   .handler(async ({ data }) => {
-
     const { audio, model, language, removeFillerWords } = data
 
-    if (audio.size > 10 * 1024 * 1024) { // 10MB limit
-      throw new Error("Audio file size exceeds 10MB limit")
+    if (audio.size > 10 * 1024 * 1024) {
+      // 10MB limit
+      throw new Error('Audio file size exceeds 10MB limit')
     }
 
     const buffer = Buffer.from(await audio.arrayBuffer())
 
-    if (model === "whisper-1") {
+    if (model === 'whisper-1') {
       return await transcribeWithGemini(buffer, language, removeFillerWords)
-    } else if (model === "gemini-2.0-flash") {
+    } else if (model === 'gemini-2.0-flash') {
       return await transcribeWithGemini(buffer, language, removeFillerWords)
     }
 
     return await transcribeWithGemini(buffer, language, removeFillerWords)
-
   })
 
 type TranscriptionOptions = {
@@ -53,24 +63,26 @@ type TranscriptionOptions = {
   removeFillerWords?: boolean
 }
 
-const getOptimizedTranscriptionPrompt = (options: TranscriptionOptions): string => {
+const getOptimizedTranscriptionPrompt = (
+  options: TranscriptionOptions,
+): string => {
   const { language, removeFillerWords = true } = options
 
   const languageMap: { [key: string]: string } = {
-    de: "German",
-    en: "English",
-    es: "Spanish",
-    fr: "French",
-    it: "Italian",
-    pt: "Portuguese",
-    ru: "Russian",
-    ja: "Japanese",
-    ko: "Korean",
-    zh: "Chinese",
+    de: 'German',
+    en: 'English',
+    es: 'Spanish',
+    fr: 'French',
+    it: 'Italian',
+    pt: 'Portuguese',
+    ru: 'Russian',
+    ja: 'Japanese',
+    ko: 'Korean',
+    zh: 'Chinese',
   }
 
   const targetLanguage = languageMap[language] || language
-  const isAutoDetect = language === "auto"
+  const isAutoDetect = language === 'auto'
 
   const fillerWordInstructions = removeFillerWords
     ? `**CRITICAL: REMOVE ALL FILLER WORDS AND HESITATIONS**
@@ -86,7 +98,7 @@ const getOptimizedTranscriptionPrompt = (options: TranscriptionOptions): string 
 
   return `You are a professional audio transcriber. Transcribe this audio with maximum accuracy.
 
-**LANGUAGE:** ${isAutoDetect ? "Auto-detect the primary language" : `Primarily ${targetLanguage}`}
+**LANGUAGE:** ${isAutoDetect ? 'Auto-detect the primary language' : `Primarily ${targetLanguage}`}
 - Preserve foreign words, names, and technical terms exactly as spoken
 - Handle code-switching and multilingual content naturally
 - Do not translate or "correct" non-target language phrases
@@ -113,33 +125,33 @@ Begin transcription:`
 
 /** === Shared Subschemas === */
 const TextContent = z.object({
-  type: z.literal("text"),
+  type: z.literal('text'),
   text: z.string(),
 })
 const ImageContentPart = z.object({
-  type: z.literal("image_url"),
+  type: z.literal('image_url'),
   image_url: z.object({
     url: z.string(),
     detail: z.string().optional(),
   }),
 })
 const AudioContentPart = z.object({
-  type: z.literal("input_audio"),
+  type: z.literal('input_audio'),
   input_audio: z.object({
     data: z.string().base64(),
-    format: z.enum(["wav", "mp3"]),
+    format: z.enum(['wav', 'mp3']),
   }),
 })
-const ContentPart = z.union([TextContent, ImageContentPart, AudioContentPart,])
+const ContentPart = z.union([TextContent, ImageContentPart, AudioContentPart])
 
 export const UserMessage = z.object({
-  role: z.enum(["user", "assistant", "system"]),
+  role: z.enum(['user', 'assistant', 'system']),
   content: z.union([z.string(), z.array(ContentPart)]),
   name: z.string().optional(),
 })
 
 export const ToolMessage = z.object({
-  role: z.literal("tool"),
+  role: z.literal('tool'),
   content: z.string(),
   tool_call_id: z.string(),
   name: z.string().optional(),
@@ -153,14 +165,14 @@ const FunctionDescription = z.object({
   parameters: z.record(z.unknown()),
 })
 const ToolSchema = z.object({
-  type: z.literal("function"),
+  type: z.literal('function'),
   function: FunctionDescription,
 })
 const ToolChoiceSchema = z.union([
-  z.literal("none"),
-  z.literal("auto"),
+  z.literal('none'),
+  z.literal('auto'),
   z.object({
-    type: z.literal("function"),
+    type: z.literal('function'),
     function: z.object({ name: z.string() }),
   }),
 ])
@@ -172,9 +184,7 @@ export const OpenRouterRequestSchema = z.object({
   messages: z.array(MessageSchema).optional(),
   prompt: z.string().optional(),
   model: z.string().optional(),
-  response_format: z
-    .object({ type: z.literal("json_object") })
-    .optional(),
+  response_format: z.object({ type: z.literal('json_object') }).optional(),
   stop: z.union([z.string(), z.array(z.string())]).optional(),
   stream: z.boolean().optional(),
   max_tokens: z.number().int().positive().optional(),
@@ -192,11 +202,11 @@ export const OpenRouterRequestSchema = z.object({
   min_p: z.number().min(0).max(1).optional(),
   top_a: z.number().min(0).max(1).optional(),
   prediction: z
-    .object({ type: z.literal("content"), content: z.string() })
+    .object({ type: z.literal('content'), content: z.string() })
     .optional(),
   transforms: z.array(z.string()).optional(),
   models: z.array(z.string()).optional(),
-  route: z.literal("fallback").optional(),
+  route: z.literal('fallback').optional(),
   provider: ProviderPreferences.optional(),
   user: z.string().optional(),
 })
@@ -210,7 +220,7 @@ const ErrorResponse = z.object({
 const FunctionCall = z.record(z.unknown()) // konkret nach Bedarf
 const ToolCall = z.object({
   id: z.string(),
-  type: z.literal("function"),
+  type: z.literal('function'),
   function: FunctionCall,
 })
 
@@ -255,13 +265,13 @@ export const OpenRouterResponseSchema = z.object({
   id: z.string(),
   provider: z.string(),
   choices: z.array(
-    z.union([NonChatChoice, NonStreamingChoice, StreamingChoice])
+    z.union([NonChatChoice, NonStreamingChoice, StreamingChoice]),
   ),
   created: z.number().int(),
   model: z.string(),
   object: z.union([
-    z.literal("chat.completion"),
-    z.literal("chat.completion.chunk"),
+    z.literal('chat.completion'),
+    z.literal('chat.completion.chunk'),
   ]),
   system_fingerprint: z.string().optional(),
   usage: ResponseUsage.optional(),
@@ -272,106 +282,106 @@ export type OpenRouterRequest = z.infer<typeof OpenRouterRequestSchema>
 export type OpenRouterResponse = z.infer<typeof OpenRouterResponseSchema>
 
 type NonStreamingChoice = Extract<
-  OpenRouterResponse["choices"][number],
+  OpenRouterResponse['choices'][number],
   { message: unknown }
 >
 
 function isNonStreamingChoice(
-  choice: OpenRouterResponse["choices"][number]
+  choice: OpenRouterResponse['choices'][number],
 ): choice is NonStreamingChoice {
-  return typeof (choice as any).message === "object"
+  return typeof (choice as any).message === 'object'
 }
 
 async function transcribeWithGemini(
   buffer: Buffer,
   language: string,
-  removeFillerWords = true
+  removeFillerWords = true,
 ) {
-  const base64Audio = buffer.toString("base64")
+  const base64Audio = buffer.toString('base64')
 
-  const resp = await fetch(
-    "https://openrouter.ai/api/v1/chat/completions",
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${env.OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.0-flash-001:floor",
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: getOptimizedTranscriptionPrompt({
-                  language,
-                  removeFillerWords,
-                }),
+  const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${env.OPENROUTER_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'google/gemini-2.0-flash-001:floor',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: getOptimizedTranscriptionPrompt({
+                language,
+                removeFillerWords,
+              }),
+            },
+            {
+              type: 'input_audio',
+              input_audio: {
+                data: base64Audio,
+                format: 'mp3',
               },
-              {
-                type: "input_audio",
-                input_audio: {
-                  data: base64Audio,
-                  format: "mp3",
-                },
-              },
-            ],
-          },
-        ],
-        temperature: 0,
-        usage: {
-          include: true,
+            },
+          ],
         },
-      }),
-    }
-  )
+      ],
+      temperature: 0,
+      usage: {
+        include: true,
+      },
+    }),
+  })
 
   if (!resp.ok) {
     let errorMessage = `HTTP ${resp.status}: ${resp.statusText}`
     try {
       const errJson = await resp.json()
-      errorMessage =
-        errJson.error?.message || errJson.message || errorMessage
+      errorMessage = errJson.error?.message || errJson.message || errorMessage
     } catch {
       /* ignore */
     }
-    console.error("OpenRouter API error:", errorMessage)
+    console.error('OpenRouter API error:', errorMessage)
     throw new Error(errorMessage)
   }
 
   const json = await resp.json()
-  const { success, data: parsed, error } = OpenRouterResponseSchema.safeParse(json)
+  const {
+    success,
+    data: parsed,
+    error,
+  } = OpenRouterResponseSchema.safeParse(json)
 
   if (!success) {
-    console.error("Failed to parse OpenRouter response:", error)
-    throw new Error("Failed to parse OpenRouter response")
+    console.error('Failed to parse OpenRouter response:', error)
+    throw new Error('Failed to parse OpenRouter response')
   }
 
   if (!parsed.choices || parsed.choices.length === 0) {
-    console.error("No choices returned in OpenRouter response")
+    console.error('No choices returned in OpenRouter response')
     console.dir(parsed)
-    throw new Error("No choices returned in OpenRouter response")
+    throw new Error('No choices returned in OpenRouter response')
   }
 
   const firstChoice = parsed.choices[0]!
 
   if (firstChoice.error) {
-    console.error("OpenRouter error:", parsed.choices[0]!.error)
+    console.error('OpenRouter error:', parsed.choices[0]!.error)
     throw new Error(firstChoice.error.message)
   }
 
   if (!isNonStreamingChoice(firstChoice)) {
-    console.error("Unexpected choice shape, no message field:", firstChoice)
-    throw new Error("Invalid choice shape")
+    console.error('Unexpected choice shape, no message field:', firstChoice)
+    throw new Error('Invalid choice shape')
   }
 
   const content = firstChoice.message.content
 
   if (!content) {
-    console.error("No content in OpenRouter response message")
-    throw new Error("No content in OpenRouter response message")
+    console.error('No content in OpenRouter response message')
+    throw new Error('No content in OpenRouter response message')
   }
 
   return {

@@ -24,9 +24,14 @@ export default function GlobalHeader() {
             zkribe - Transkription
           </h1>
         </Link>
-        <div className='ml-auto h-6 flex items-center gap-4'>
+        <div className="ml-auto h-6 flex items-center gap-4">
           <Button variant="outline" size="default" asChild>
-            <a href="https://github.com/Lucas-Bur/zkribe" target="_blank" rel="noreferrer noopener" className='flex items-center gap-2'>
+            <a
+              href="https://github.com/Lucas-Bur/zkribe"
+              target="_blank"
+              rel="noreferrer noopener"
+              className="flex items-center gap-2"
+            >
               <Star />
               Github
             </a>

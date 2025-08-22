@@ -1,48 +1,50 @@
-import { FileUpload } from '@/components/FileUpload';
-import { GenerationDetailsCard } from '@/components/GenerationDetails';
-import { TranscriptionResults } from '@/components/TranscriptionResult';
-import { getTranscriptionFn } from '@/fn/transcribe';
-import { compressAudioToOptimizedMp3 } from '@/lib/audio-converter';
-import { createFileRoute } from '@tanstack/react-router';
-import { useRef, useState } from 'react';
+import { FileUpload } from '@/components/FileUpload'
+import { GenerationDetailsCard } from '@/components/GenerationDetails'
+import { TranscriptionResults } from '@/components/TranscriptionResult'
+import { getTranscriptionFn } from '@/fn/transcribe'
+import { compressAudioToOptimizedMp3 } from '@/lib/audio-converter'
+import { createFileRoute } from '@tanstack/react-router'
+import { useRef, useState } from 'react'
 
 export const Route = createFileRoute('/')({
   component: App,
 })
 
-type TranscriptionResponse = Awaited<ReturnType<typeof getTranscriptionFn>> | null
+type TranscriptionResponse = Awaited<
+  ReturnType<typeof getTranscriptionFn>
+> | null
 
 function App() {
-
   const [file, setFile] = useState<File | null>(null)
   const [processedFile, setProcessedFile] = useState<File | null>(null)
   const [isTranscribing, setIsTranscribing] = useState(false)
   const [isConverting, setIsConverting] = useState(false)
-  const [transcriptionResult, setTranscriptionResult] = useState<TranscriptionResponse>(null)
-  const [error, setError] = useState<string>("")
-  const [originalAudioUrl, setOriginalAudioUrl] = useState<string>("")
-  const [processedAudioUrl, setProcessedAudioUrl] = useState<string>("")
+  const [transcriptionResult, setTranscriptionResult] =
+    useState<TranscriptionResponse>(null)
+  const [error, setError] = useState<string>('')
+  const [originalAudioUrl, setOriginalAudioUrl] = useState<string>('')
+  const [processedAudioUrl, setProcessedAudioUrl] = useState<string>('')
   const originalAudioRef = useRef<HTMLAudioElement>(null)
   const processedAudioRef = useRef<HTMLAudioElement>(null)
   const [isPlayingOriginal, setIsPlayingOriginal] = useState(false)
   const [isPlayingProcessed, setIsPlayingProcessed] = useState(false)
-  const [selectedModel, setSelectedModel] = useState<string>("gemini-2.0-flash")
-  const [selectedLanguage, setSelectedLanguage] = useState<string>("auto")
+  const [selectedModel, setSelectedModel] = useState<string>('gemini-2.0-flash')
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('auto')
   const [removeFillerWords, setRemoveFillerWords] = useState<boolean>(true)
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const selectedFile = event.target.files?.[0]
     if (selectedFile) {
-      if (
-        selectedFile.type.startsWith("audio/")
-      ) {
+      if (selectedFile.type.startsWith('audio/')) {
         setFile(selectedFile)
-        setError("")
+        setError('')
         setTranscriptionResult(null)
 
         const originalUrl = URL.createObjectURL(selectedFile)
         setOriginalAudioUrl(originalUrl)
-        setProcessedAudioUrl("")
+        setProcessedAudioUrl('')
         setProcessedFile(null)
         setIsConverting(true)
 
@@ -53,17 +55,19 @@ function App() {
           setProcessedAudioUrl(processedUrl)
           setIsConverting(false)
         } catch (error) {
-          setError("Error processing audio file. Please try a different format.")
+          setError(
+            'Error processing audio file. Please try a different format.',
+          )
           setIsConverting(false)
           setFile(null)
-          setOriginalAudioUrl("")
-          setProcessedAudioUrl("")
+          setOriginalAudioUrl('')
+          setProcessedAudioUrl('')
         }
       } else {
-        setError("Please select a valid audio file")
+        setError('Please select a valid audio file')
         setFile(null)
-        setOriginalAudioUrl("")
-        setProcessedAudioUrl("")
+        setOriginalAudioUrl('')
+        setProcessedAudioUrl('')
       }
     }
   }
@@ -98,34 +102,43 @@ function App() {
 
   const handleTranscribe = async () => {
     if (!processedFile) {
-      setError("No processed audio file available for transcription.")
+      setError('No processed audio file available for transcription.')
       return
     }
 
     setIsTranscribing(true)
-    setError("")
+    setError('')
 
     try {
       const formdata = new FormData()
-      formdata.append("audio", processedFile)
-      formdata.append("model", selectedModel)
-      formdata.append("language", selectedLanguage)
-      formdata.append("removeFillerWords", removeFillerWords.valueOf().toString())
+      formdata.append('audio', processedFile)
+      formdata.append('model', selectedModel)
+      formdata.append('language', selectedLanguage)
+      formdata.append(
+        'removeFillerWords',
+        removeFillerWords.valueOf().toString(),
+      )
       const response = await getTranscriptionFn({ data: formdata })
       setTranscriptionResult(response)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Transcription error. Please try again.")
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Transcription error. Please try again.',
+      )
     } finally {
       setIsTranscribing(false)
     }
   }
 
   const downloadTranscription = () => {
-    const blob = new Blob([transcriptionResult?.transcription || ""], { type: "text/plain" })
+    const blob = new Blob([transcriptionResult?.transcription || ''], {
+      type: 'text/plain',
+    })
     const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
+    const a = document.createElement('a')
     a.href = url
-    a.download = `transcription-${file?.name || "audio"}.txt`
+    a.download = `transcription-${file?.name || 'audio'}.txt`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -165,14 +178,13 @@ function App() {
           transcription={transcriptionResult?.transcription}
           onDownload={downloadTranscription}
         />
-
       </div>
-      {
-        (transcriptionResult?.usage) && (
-          <GenerationDetailsCard provider={transcriptionResult.provider} {...transcriptionResult.usage} />
-        )
-      }
+      {transcriptionResult?.usage && (
+        <GenerationDetailsCard
+          provider={transcriptionResult.provider}
+          {...transcriptionResult.usage}
+        />
+      )}
     </div>
-
   )
 }

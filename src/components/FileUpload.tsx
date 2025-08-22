@@ -1,9 +1,33 @@
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
-import { Brain, CloudUpload, FileAudio, Filter, Info, Languages, Loader2, Mic, Pause, Play, Upload } from "lucide-react"
-import type React from "react"
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
+import {
+  Brain,
+  CloudUpload,
+  FileAudio,
+  Filter,
+  Info,
+  Languages,
+  Loader2,
+  Mic,
+  Pause,
+  Play,
+  Upload,
+} from 'lucide-react'
+import type React from 'react'
 
 interface FileUploadProps {
   file: File | null
@@ -32,7 +56,11 @@ interface FileUploadProps {
 }
 
 const languageOptions = [
-  { value: 'auto', mainText: 'Automatisch erkennen', subText: 'Optimal für KI-Analyse' },
+  {
+    value: 'auto',
+    mainText: 'Automatisch erkennen',
+    subText: 'Optimal für KI-Analyse',
+  },
   { value: 'de', mainText: 'Deutsch', subText: 'German (DE)' },
   { value: 'en', mainText: 'Englisch', subText: 'English (US/UK)' },
   { value: 'es', mainText: 'Spanisch', subText: 'Spanish (ES/LA)' },
@@ -42,7 +70,11 @@ const languageOptions = [
   { value: 'ru', mainText: 'Russisch', subText: 'Russian (RU)' },
   { value: 'ja', mainText: 'Japanisch', subText: 'Japanese (JP)' },
   { value: 'ko', mainText: 'Koreanisch', subText: 'Korean (KR)' },
-  { value: 'zh', mainText: 'Chinesisch', subText: 'Chinese (Mandarin/Cantonese)' },
+  {
+    value: 'zh',
+    mainText: 'Chinesisch',
+    subText: 'Chinese (Mandarin/Cantonese)',
+  },
 ] as const
 
 const modelOptions = [
@@ -92,7 +124,9 @@ export function FileUpload({
           <Upload className="size-5" />
           Audiodatei hochladen
         </CardTitle>
-        <CardDescription>Wählen Sie eine Audio-Datei zum Transkribieren</CardDescription>
+        <CardDescription>
+          Wählen Sie eine Audio-Datei zum Transkribieren
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -104,8 +138,8 @@ export function FileUpload({
             <Select value={selectedModel} onValueChange={onModelChange}>
               <SelectTrigger className="w-full font-medium">
                 <SelectValue>
-                  {selectedModel ? (
-                    (() => {
+                  {selectedModel
+                    ? (() => {
                       const selectedOption = modelOptions.find(
                         (option) => option.value === selectedModel,
                       )
@@ -120,9 +154,7 @@ export function FileUpload({
                       }
                       return 'Wählen Sie ein Modell'
                     })()
-                  ) : (
-                    'Wählen Sie ein Modell'
-                  )}
+                    : 'Wählen Sie ein Modell'}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -134,7 +166,9 @@ export function FileUpload({
                         <IconComponent className="h-4 w-4" />
                         <div>
                           <div className="font-medium">{option.mainText}</div>
-                          <div className="text-xs text-muted-foreground">{option.subText}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {option.subText}
+                          </div>
                         </div>
                       </div>
                     </SelectItem>
@@ -153,8 +187,9 @@ export function FileUpload({
               <SelectTrigger className="w-full font-medium">
                 <SelectValue>
                   {selectedLanguage
-                    ? languageOptions.find((option) => option.value === selectedLanguage)
-                      ?.mainText || 'Sprache auswählen' // Fallback für unbekannten Wert
+                    ? languageOptions.find(
+                      (option) => option.value === selectedLanguage,
+                    )?.mainText || 'Sprache auswählen' // Fallback für unbekannten Wert
                     : 'Sprache auswählen'}
                 </SelectValue>
               </SelectTrigger>
@@ -163,7 +198,9 @@ export function FileUpload({
                   <SelectItem key={option.value} value={option.value}>
                     <div>
                       <div className="font-medium">{option.mainText}</div>
-                      <div className="text-xs text-muted-foreground">{option.subText}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {option.subText}
+                      </div>
                     </div>
                   </SelectItem>
                 ))}
@@ -176,11 +213,18 @@ export function FileUpload({
           <div className="flex items-center gap-3">
             <Filter className="h-5 w-5 text-foreground" />
             <div>
-              <label className="text-sm font-medium text-foreground">Füllwörter entfernen</label>
-              <p className="text-xs text-muted-foreground">Entfernt "äh", "ähm", "also", etc. für saubereren Text</p>
+              <label className="text-sm font-medium text-foreground">
+                Füllwörter entfernen
+              </label>
+              <p className="text-xs text-muted-foreground">
+                Entfernt "äh", "ähm", "also", etc. für saubereren Text
+              </p>
             </div>
           </div>
-          <Switch checked={removeFillerWords} onCheckedChange={onRemoveFillerWordsChange} />
+          <Switch
+            checked={removeFillerWords}
+            onCheckedChange={onRemoveFillerWordsChange}
+          />
         </div>
 
         <div className="border-2 border-dashed rounded-lg p-6 text-center hover:border-primary transition-colors">
@@ -193,8 +237,12 @@ export function FileUpload({
           />
           <label htmlFor="audio-upload" className="cursor-pointer">
             <FileAudio className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <p className="mb-2 text-foreground">Klicken Sie, um eine Audiodatei auszuwählen</p>
-            <p className="text-sm text-muted-foreground">MP3, WAV, OPUS bis zu 10MB (auto-komprimiert)</p>
+            <p className="mb-2 text-foreground">
+              Klicken Sie, um eine Audiodatei auszuwählen
+            </p>
+            <p className="text-sm text-muted-foreground">
+              MP3, WAV, OPUS bis zu 10MB (auto-komprimiert)
+            </p>
           </label>
         </div>
 
@@ -203,18 +251,26 @@ export function FileUpload({
             <div className="flex items-center gap-3">
               <FileAudio className="h-5 w-5 text-foreground" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
-                <p className="text-sm text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                <p className="text-sm font-medium text-foreground truncate">
+                  {file.name}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {(file.size / 1024 / 1024).toFixed(2)} MB
+                </p>
                 {processedFile && (
                   <div className="space-y-1">
                     <p className="text-xs text-tertiary font-medium">
-                      KI-optimiert: <span className="text-tertiary">{(processedFile.size / 1024 / 1024).toFixed(2)} MB</span>
+                      KI-optimiert:{' '}
+                      <span className="text-tertiary">
+                        {(processedFile.size / 1024 / 1024).toFixed(2)} MB
+                      </span>
                     </p>
                     {/* HIER WURDE ES ANGEPASST: text-tertiary für besseren Kontrast */}
                     <div className="flex items-start gap-2 p-2 bg-tertiary/10 rounded text-xs text-tertiary">
                       <Info className="h-3 w-3 mt-0.5 flex-shrink-0" />
                       <span>
-                        Optimiert für Transkription: 16kHz Mono, Kompression & Filterung für bessere KI-Erkennung
+                        Optimiert für Transkription: 16kHz Mono, Kompression &
+                        Filterung für bessere KI-Erkennung
                       </span>
                     </div>
                   </div>
@@ -225,7 +281,8 @@ export function FileUpload({
             {isConverting && (
               <div className="flex items-center gap-2 text-sm text-primary">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Optimiere Audio für KI-Transkription (16kHz Mono + Kompression)...
+                Optimiere Audio für KI-Transkription (16kHz Mono +
+                Kompression)...
               </div>
             )}
 
@@ -235,8 +292,12 @@ export function FileUpload({
                   {/* Original Audio Player */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-foreground">Original:</span>
-                      <span className="text-xs text-muted-foreground">{(file!.size / 1024 / 1024).toFixed(2)} MB</span>
+                      <span className="text-sm font-medium text-foreground">
+                        Original:
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {(file!.size / 1024 / 1024).toFixed(2)} MB
+                      </span>
                     </div>
                     <Button
                       variant="outline"
@@ -244,8 +305,12 @@ export function FileUpload({
                       onClick={onToggleOriginalPlayback}
                       className="w-full flex items-center gap-2 bg-transparent border border-border hover:bg-muted"
                     >
-                      {isPlayingOriginal ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                      {isPlayingOriginal ? "Pause" : "Original anhören"}
+                      {isPlayingOriginal ? (
+                        <Pause className="h-4 w-4" />
+                      ) : (
+                        <Play className="h-4 w-4" />
+                      )}
+                      {isPlayingOriginal ? 'Pause' : 'Original anhören'}
                     </Button>
                     <audio
                       ref={originalAudioRef}
@@ -261,7 +326,9 @@ export function FileUpload({
                   {processedAudioUrl && processedFile && (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-tertiary">KI-optimiert:</span>
+                        <span className="text-sm font-medium text-tertiary">
+                          KI-optimiert:
+                        </span>
                         <span className="text-xs text-tertiary">
                           {(processedFile.size / 1024 / 1024).toFixed(2)} MB
                         </span>
@@ -272,8 +339,12 @@ export function FileUpload({
                         onClick={onToggleProcessedPlayback}
                         className="w-full flex items-center gap-2 border-tertiary text-tertiary hover:bg-tertiary/10 bg-transparent"
                       >
-                        {isPlayingProcessed ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                        {isPlayingProcessed ? "Pause" : "KI-optimiert anhören"}
+                        {isPlayingProcessed ? (
+                          <Pause className="h-4 w-4" />
+                        ) : (
+                          <Play className="h-4 w-4" />
+                        )}
+                        {isPlayingProcessed ? 'Pause' : 'KI-optimiert anhören'}
                       </Button>
                       <audio
                         ref={processedAudioRef}
@@ -290,7 +361,8 @@ export function FileUpload({
                 {processedFile && (
                   <div className="text-center">
                     <p className="text-xs text-muted-foreground">
-                      Vergleichen Sie Original und KI-optimierte Version vor der Transkription
+                      Vergleichen Sie Original und KI-optimierte Version vor der
+                      Transkription
                     </p>
                   </div>
                 )}
@@ -314,10 +386,11 @@ export function FileUpload({
           {isTranscribing ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Transkribiere mit {selectedModel === "whisper-1" ? "Whisper-1" : "Gemini 2.0"}...
+              Transkribiere mit{' '}
+              {selectedModel === 'whisper-1' ? 'Whisper-1' : 'Gemini 2.0'}...
             </>
           ) : (
-            `Transkription starten mit ${selectedModel === "whisper-1" ? "Whisper-1" : "Gemini 2.0"}`
+            `Transkription starten mit ${selectedModel === 'whisper-1' ? 'Whisper-1' : 'Gemini 2.0'}`
           )}
         </Button>
       </CardContent>
