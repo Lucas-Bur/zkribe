@@ -140,14 +140,13 @@ function App() {
     const { segments } = transcriptionResult.transcription
     let formattedText = ''
 
-    // Wir können hier entscheiden, wie wir den Text formatieren wollen.
-    // Eine einfache, lesbare Version könnte so aussehen:
     segments.forEach((segment) => {
-      // Füge Sprecher- und Segment-ID hinzu, wenn vorhanden
       const speakerInfo = segment.speaker ? `${segment.speaker}: ` : ''
       const segmentId = segment.id !== undefined ? `[#${segment.id}] ` : ''
       const typeInfo =
-        segment.type && segment.type !== 'speech' ? `[${segment.type.replace('_', ' ')}] ` : ''
+        segment.type && segment.type !== 'speech'
+          ? `[${segment.type.replace('_', ' ')}] `
+          : ''
 
       formattedText += `${speakerInfo}${segmentId}${typeInfo}${segment.text}\n\n`
     })

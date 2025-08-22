@@ -22,14 +22,14 @@ import {
   Info,
   Languages,
   Loader2,
-  Mic,
   Pause,
   Play,
+  Speaker,
   Upload,
 } from 'lucide-react'
 import type React from 'react'
 
-interface FileUploadProps {
+type FileUploadProps = {
   file: File | null
   originalAudioUrl: string
   processedAudioUrl: string
@@ -79,16 +79,28 @@ const languageOptions = [
 
 const modelOptions = [
   {
-    value: 'gemini-2.0-flash',
+    value: 'google/gemini-2.0-flash-001',
     mainText: 'Gemini 2.0 Flash',
     subText: 'Vielseitige KI für Text, Bild, Audio',
     icon: Brain,
   },
+  // {
+  //   value: 'whisper-1',
+  //   mainText: 'OpenAI Whisper-1',
+  //   subText: 'Spezialisiert auf hochpräzise Spracherkennung',
+  //   icon: Mic,
+  // },
   {
-    value: 'whisper-1',
-    mainText: 'OpenAI Whisper-1',
-    subText: 'Spezialisiert auf hochpräzise Spracherkennung',
-    icon: Mic,
+    value: 'openai/gpt-4o-audio-preview',
+    mainText: 'OpenAI GPT-4o Audio Preview',
+    subText: 'Spezialisiert auf Audio-Transkription',
+    icon: Speaker,
+  },
+  {
+    value: 'google/gemini-2.5-flash-lite',
+    mainText: 'Gemini 2.5 Flash Lite',
+    subText: 'Vielseitige KI für Text, Bild, Audio',
+    icon: Brain,
   },
 ] as const
 
@@ -140,20 +152,20 @@ export function FileUpload({
                 <SelectValue>
                   {selectedModel
                     ? (() => {
-                      const selectedOption = modelOptions.find(
-                        (option) => option.value === selectedModel,
-                      )
-                      if (selectedOption) {
-                        const IconComponent = selectedOption.icon
-                        return (
-                          <div className="flex items-center gap-2">
-                            <IconComponent className="h-4 w-4" />
-                            <span>{selectedOption.mainText}</span>
-                          </div>
+                        const selectedOption = modelOptions.find(
+                          (option) => option.value === selectedModel,
                         )
-                      }
-                      return 'Wählen Sie ein Modell'
-                    })()
+                        if (selectedOption) {
+                          const IconComponent = selectedOption.icon
+                          return (
+                            <div className="flex items-center gap-2">
+                              <IconComponent className="h-4 w-4" />
+                              <span>{selectedOption.mainText}</span>
+                            </div>
+                          )
+                        }
+                        return 'Wählen Sie ein Modell'
+                      })()
                     : 'Wählen Sie ein Modell'}
                 </SelectValue>
               </SelectTrigger>
@@ -188,8 +200,8 @@ export function FileUpload({
                 <SelectValue>
                   {selectedLanguage
                     ? languageOptions.find(
-                      (option) => option.value === selectedLanguage,
-                    )?.mainText || 'Sprache auswählen' // Fallback für unbekannten Wert
+                        (option) => option.value === selectedLanguage,
+                      )?.mainText || 'Sprache auswählen' // Fallback für unbekannten Wert
                     : 'Sprache auswählen'}
                 </SelectValue>
               </SelectTrigger>
@@ -260,12 +272,11 @@ export function FileUpload({
                 {processedFile && (
                   <div className="space-y-1">
                     <p className="text-xs text-tertiary font-medium">
-                      KI-optimiert:{' '}
+                      Optimiert:{' '}
                       <span className="text-tertiary">
                         {(processedFile.size / 1024 / 1024).toFixed(2)} MB
                       </span>
                     </p>
-                    {/* HIER WURDE ES ANGEPASST: text-tertiary für besseren Kontrast */}
                     <div className="flex items-start gap-2 p-2 bg-tertiary/10 rounded text-xs text-tertiary">
                       <Info className="h-3 w-3 mt-0.5 flex-shrink-0" />
                       <span>
@@ -327,7 +338,7 @@ export function FileUpload({
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-tertiary">
-                          KI-optimiert:
+                          Für KI optimiert:
                         </span>
                         <span className="text-xs text-tertiary">
                           {(processedFile.size / 1024 / 1024).toFixed(2)} MB
@@ -344,7 +355,7 @@ export function FileUpload({
                         ) : (
                           <Play className="h-4 w-4" />
                         )}
-                        {isPlayingProcessed ? 'Pause' : 'KI-optimiert anhören'}
+                        {isPlayingProcessed ? 'Pause' : 'Optimiert anhören'}
                       </Button>
                       <audio
                         ref={processedAudioRef}
@@ -387,10 +398,17 @@ export function FileUpload({
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               Transkribiere mit{' '}
-              {selectedModel === 'whisper-1' ? 'Whisper-1' : 'Gemini 2.0'}...
+              {
+                modelOptions.find((option) => option.value === selectedModel)
+                  ?.mainText
+              }
+              ...
             </>
           ) : (
-            `Transkription starten mit ${selectedModel === 'whisper-1' ? 'Whisper-1' : 'Gemini 2.0'}`
+            `Transkription starten mit ${
+              modelOptions.find((option) => option.value === selectedModel)
+                ?.mainText
+            }`
           )}
         </Button>
       </CardContent>

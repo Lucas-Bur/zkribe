@@ -15,7 +15,11 @@ export const getTranscriptionFn = createServerFn({
 
     const parsedResult = z.object({
       audio: z.instanceof(File),
-      model: z.enum(['gemini-2.0-flash', 'whisper-1']),
+      model: z.enum([
+        'google/gemini-2.0-flash-001',
+        'whisper-1',
+        'google/gemini-2.5-flash-lite',
+      ]),
       language: z.enum([
         'auto',
         'de',
@@ -49,13 +53,18 @@ export const getTranscriptionFn = createServerFn({
 
     const buffer = Buffer.from(await audio.arrayBuffer())
 
-    if (model === 'whisper-1') {
-      return await transcribeWithGemini(buffer, language, removeFillerWords)
-    } else if (model === 'gemini-2.0-flash') {
-      return await transcribeWithGemini(buffer, language, removeFillerWords)
-    }
+    // if (model === 'whisper-1') {
+    //   return await transcribeWithGemini(buffer, language, removeFillerWords, model)
+    // } else if (model === 'gemini-2.0-flash') {
+    //   return await transcribeWithGemini(buffer, language, removeFillerWords, model)
+    // }
 
-    return await transcribeWithGemini(buffer, language, removeFillerWords)
+    return await transcribeWithGemini(
+      buffer,
+      language,
+      removeFillerWords,
+      model,
+    )
   })
 
 type TranscriptionOptions = {
@@ -101,7 +110,7 @@ const getOptimizedTranscriptionPrompt = (
 **LANGUAGE:** ${isAutoDetect ? 'Auto-detect the primary language' : `Primarily ${targetLanguage}`}
 - Preserve foreign words, names, and technical terms exactly as spoken
 - Handle code-switching and multilingual content naturally
-- Do not translate or "correct" non-target language phrases
+- Do NOT translate or "correct" non-target language phrases!
 
 ${fillerWordInstructions}
 
@@ -109,16 +118,12 @@ ${fillerWordInstructions}
 - Use proper punctuation, capitalization, and paragraph breaks
 - Mark unclear speech as [inaudible]
 - Mark significant background sounds as [background noise] or [music]
+- Transcribe word-for-word, including any verbal tics, unless explicitly told to remove filler words.
 
 **SPEAKER IDENTIFICATION:**
-- Label multiple speakers as [Speaker 1], [Speaker 2], etc.
+- Label multiple speakers as Speaker 1, Speaker 2, etc.
 - Maintain consistent speaker labels throughout
 - Use new lines for speaker changes
-
-**OUTPUT FORMAT:**
-- Plain text only, no markdown or formatting
-- Natural paragraph structure for readability
-- Focus on accuracy over interpretation
 
 Begin transcription:`
 }
@@ -293,26 +298,36 @@ function isNonStreamingChoice(
 }
 
 // === Structured Output Schema für Transkription ===
-export const StructuredTranscriptionOutputSchema = z.object({
-  segments:
-    z.object({
-      id: z.number().int().describe('Unique identifier for the transcription segment. Increments by 1 for each segment.'),
-      speaker: z
-        .string()
-        .describe(
-          'The identified speaker for this segment (e.g., "Speaker 1", "Speaker 2").',
-        ),
-      text: z
-        .string()
-        .describe('The transcribed text content of this segment.'),
-      type: z
-        .enum(['speech', 'background_noise', 'music', 'inaudible'])
-        .describe('Type of content in the segment (e.g., speech, background noise).'),
-    }).array()
-      .describe('An ordered array of transcription segments.')
-}).describe(
-  'Structured transcription output containing segments with speaker identification and content type.',
-)
+export const StructuredTranscriptionOutputSchema = z
+  .object({
+    segments: z
+      .object({
+        id: z
+          .number()
+          .int()
+          .describe(
+            'Unique identifier for the transcription segment. Increments by 1 for each segment.',
+          ),
+        speaker: z
+          .string()
+          .describe(
+            'The identified speaker for this segment (e.g., "Speaker 1", "Speaker 2").',
+          ),
+        text: z
+          .string()
+          .describe('The transcribed text content of this segment.'),
+        type: z
+          .enum(['speech', 'background_noise', 'music', 'inaudible'])
+          .describe(
+            'Type of content in the segment (e.g., speech, background noise).',
+          ),
+      })
+      .array()
+      .describe('An ordered array of transcription segments.'),
+  })
+  .describe(
+    'Structured transcription output containing segments with speaker identification and content type.',
+  )
 
 export type StructuredTranscriptionOutput = z.infer<
   typeof StructuredTranscriptionOutputSchema
@@ -421,6 +436,7 @@ async function transcribeWithGemini(
   buffer: Buffer,
   language: string,
   removeFillerWords = true,
+  model: string,
 ) {
   const base64Audio = buffer.toString('base64')
 
@@ -431,7 +447,7 @@ async function transcribeWithGemini(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'google/gemini-2.0-flash-001:floor',
+      model: model + ':floor',
       messages: [
         {
           role: 'user',
@@ -453,7 +469,7 @@ async function transcribeWithGemini(
           ],
         },
       ],
-      temperature: 0,
+      temperature: 0.0,
       usage: {
         include: true,
       },
@@ -462,9 +478,7 @@ async function transcribeWithGemini(
         json_schema: {
           name: 'transcription_output',
           strict: true,
-          schema: zodToJsonSchema(
-            StructuredTranscriptionOutputSchema,
-          ),
+          schema: zodToJsonSchema(StructuredTranscriptionOutputSchema),
         },
       },
     }),
@@ -518,7 +532,11 @@ async function transcribeWithGemini(
     throw new Error('No content in OpenRouter response message')
   }
 
-  const { success: structuredSuccess, data: structuredData, error: structuredError } = StructuredTranscriptionOutputSchema.safeParse(JSON.parse(content))
+  const {
+    success: structuredSuccess,
+    data: structuredData,
+    error: structuredError,
+  } = StructuredTranscriptionOutputSchema.safeParse(JSON.parse(content))
 
   if (!structuredSuccess) {
     console.error('Failed to parse transcription output:', structuredError)

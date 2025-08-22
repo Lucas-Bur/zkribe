@@ -8,7 +8,16 @@ import {
 } from '@/components/ui/card'
 import { getTranscriptionFn } from '@/fn/transcribe'
 import { cn } from '@/lib/utils'
-import { ChevronDown, ChevronRight, Copy, Download, FileAudio, Info, Search, Users } from 'lucide-react'
+import {
+  ChevronDown,
+  ChevronRight,
+  Copy,
+  Download,
+  FileAudio,
+  Info,
+  Search,
+  Users,
+} from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Badge } from './ui/badge'
 import { Input } from './ui/input'
@@ -28,11 +37,9 @@ type TranscriptionResultsProps = {
 
 const typeBadgeStyle: Record<SegmentType, string> = {
   speech: 'bg-primary/10 text-primary ring-1 ring-primary/20', // Nutze primary
-  background_noise:
-    'bg-secondary/10 text-secondary ring-1 ring-secondary/20', // Nutze secondary
+  background_noise: 'bg-secondary/10 text-secondary ring-1 ring-secondary/20', // Nutze secondary
   music: 'bg-tertiary/10 text-tertiary ring-1 ring-tertiary/20', // Nutze tertiary
-  inaudible:
-    'bg-destructive/10 text-destructive ring-1 ring-destructive/20',
+  inaudible: 'bg-destructive/10 text-destructive ring-1 ring-destructive/20',
 }
 
 function SpeakerBadge({ speaker }: { speaker: string }) {
@@ -44,9 +51,8 @@ function SpeakerBadge({ speaker }: { speaker: string }) {
     'bg-chart-5/10 text-chart-5 ring-chart-5/20',
   ] as const
   const idx =
-    Math.abs(
-      speaker.split('').reduce((a, c) => a + c.charCodeAt(0), 0),
-    ) % chartPalette.length
+    Math.abs(speaker.split('').reduce((a, c) => a + c.charCodeAt(0), 0)) %
+    chartPalette.length
 
   return (
     <Badge
@@ -89,7 +95,9 @@ function CopyButton({ text }: { text: string }) {
       }}
       title="Segment kopieren"
     >
-      <Copy className={cn('h-4 w-4', copied && 'text-primary animate-wiggle')} />
+      <Copy
+        className={cn('h-4 w-4', copied && 'text-primary animate-wiggle')}
+      />
     </Button>
   )
 }
@@ -190,7 +198,9 @@ export function TranscriptionResults({
                       // Beim Wechsel zu Gruppierung: alle Sprecher einklappen
                       if (Boolean(v) && grouped) {
                         const initial: Record<string, boolean> = {}
-                        grouped.forEach(({ speaker }) => (initial[speaker] = true))
+                        grouped.forEach(
+                          ({ speaker }) => (initial[speaker] = true),
+                        )
                         setCollapsedSpeakers(initial)
                       } else {
                         setCollapsedSpeakers({}) // Zustand zurücksetzen, wenn nicht gruppiert
@@ -240,7 +250,8 @@ export function TranscriptionResults({
                             )}
                             <SpeakerBadge speaker={speaker} />
                             <span className="text-sm text-muted-foreground">
-                              {segs.length} Segment{segs.length !== 1 ? 'e' : ''}
+                              {segs.length} Segment
+                              {segs.length !== 1 ? 'e' : ''}
                             </span>
                           </div>
                         </button>
@@ -292,9 +303,7 @@ function SegmentRow({ seg, grouped }: { seg: Segment; grouped?: boolean }) {
     <div className="flex items-start gap-3 py-3 px-4 hover:bg-muted/20 transition-colors">
       <div className="flex-1 space-y-1">
         <div className="flex items-center gap-2 mb-1">
-          {!grouped && (
-            <SpeakerBadge speaker={seg.speaker} />
-          )}
+          {!grouped && <SpeakerBadge speaker={seg.speaker} />}
           <TypeBadge type={seg.type} />
           <span className="text-xs text-muted-foreground">
             Segment #{seg.id}
