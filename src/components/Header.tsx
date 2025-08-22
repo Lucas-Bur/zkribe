@@ -7,7 +7,7 @@ import { Separator } from './ui/separator'
 export default function GlobalHeader() {
   return (
     <header className="bg-background sticky top-0 z-50 border-b w-full px-6 py-4">
-      <div className="flex flex-row items-center gap-2">
+      <div className="flex flex-row items-center gap-2 h-8">
         <Link to="/">
           <h1 className="text-lg font-bold text-primary">
             <svg
@@ -34,7 +34,6 @@ export default function GlobalHeader() {
           <Separator orientation="vertical" />
           <ModeToggle />
         </div>
-
       </div>
     </header>
   )

@@ -253,6 +253,7 @@ const ResponseUsage = z.object({
 
 export const OpenRouterResponseSchema = z.object({
   id: z.string(),
+  provider: z.string(),
   choices: z.array(
     z.union([NonChatChoice, NonStreamingChoice, StreamingChoice])
   ),
@@ -376,6 +377,7 @@ async function transcribeWithGemini(
   return {
     transcription: content,
     generationId: parsed.id,
-    usage: parsed.usage
+    usage: parsed.usage,
+    provider: parsed.provider,
   }
 }

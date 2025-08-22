@@ -1,4 +1,6 @@
 import { FileUpload } from '@/components/FileUpload';
+import { GenerationDetailsCard } from '@/components/GenerationDetails';
+import { TranscriptionResults } from '@/components/TranscriptionResult';
 import { getTranscriptionFn } from '@/fn/transcribe';
 import { compressAudioToOptimizedMp3 } from '@/lib/audio-converter';
 import { createFileRoute } from '@tanstack/react-router';
@@ -118,33 +120,59 @@ function App() {
     }
   }
 
+  const downloadTranscription = () => {
+    const blob = new Blob([transcriptionResult?.transcription || ""], { type: "text/plain" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `transcription-${file?.name || "audio"}.txt`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
   return (
-    <div className="grid gap-6 md:grid-cols-2">
-      <FileUpload
-        file={file}
-        originalAudioUrl={originalAudioUrl}
-        processedAudioUrl={processedAudioUrl}
-        isConverting={isConverting}
-        error={error}
-        isPlayingOriginal={isPlayingOriginal}
-        isPlayingProcessed={isPlayingProcessed}
-        originalAudioRef={originalAudioRef}
-        processedAudioRef={processedAudioRef}
-        onFileChange={handleFileChange}
-        onToggleOriginalPlayback={toggleOriginalPlayback}
-        onToggleProcessedPlayback={toggleProcessedPlayback}
-        onTranscribe={handleTranscribe}
-        isTranscribing={isTranscribing}
-        processedFile={processedFile}
-        selectedModel={selectedModel}
-        onModelChange={setSelectedModel}
-        selectedLanguage={selectedLanguage}
-        onLanguageChange={setSelectedLanguage}
-        removeFillerWords={removeFillerWords}
-        onRemoveFillerWordsChange={setRemoveFillerWords}
-        setIsPlayingOriginal={setIsPlayingOriginal}
-        setIsPlayingProcessed={setIsPlayingProcessed}
-      />
+    <div className="p-4 min-h-[calc(100vh-65px)] bg-background">
+      <div className="grid gap-6 md:grid-cols-2">
+        <FileUpload
+          file={file}
+          originalAudioUrl={originalAudioUrl}
+          processedAudioUrl={processedAudioUrl}
+          isConverting={isConverting}
+          error={error}
+          isPlayingOriginal={isPlayingOriginal}
+          isPlayingProcessed={isPlayingProcessed}
+          originalAudioRef={originalAudioRef}
+          processedAudioRef={processedAudioRef}
+          onFileChange={handleFileChange}
+          onToggleOriginalPlayback={toggleOriginalPlayback}
+          onToggleProcessedPlayback={toggleProcessedPlayback}
+          onTranscribe={handleTranscribe}
+          isTranscribing={isTranscribing}
+          processedFile={processedFile}
+          selectedModel={selectedModel}
+          onModelChange={setSelectedModel}
+          selectedLanguage={selectedLanguage}
+          onLanguageChange={setSelectedLanguage}
+          removeFillerWords={removeFillerWords}
+          onRemoveFillerWordsChange={setRemoveFillerWords}
+          setIsPlayingOriginal={setIsPlayingOriginal}
+          setIsPlayingProcessed={setIsPlayingProcessed}
+        />
+
+        <TranscriptionResults
+          transcription={transcriptionResult?.transcription}
+          onDownload={downloadTranscription}
+        />
+
+      </div>
+      {
+        (transcriptionResult?.usage) && (
+          <GenerationDetailsCard provider={transcriptionResult.provider} {...transcriptionResult.usage} />
+        )
+      }
     </div>
+
   )
 }
