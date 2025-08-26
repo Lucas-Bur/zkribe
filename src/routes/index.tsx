@@ -28,7 +28,9 @@ function App() {
   const processedAudioRef = useRef<HTMLAudioElement>(null)
   const [isPlayingOriginal, setIsPlayingOriginal] = useState(false)
   const [isPlayingProcessed, setIsPlayingProcessed] = useState(false)
-  const [selectedModel, setSelectedModel] = useState<string>('google/gemini-2.5-flash-lite')
+  const [selectedModel, setSelectedModel] = useState<string>(
+    'google/gemini-2.5-flash-lite',
+  )
   const [selectedLanguage, setSelectedLanguage] = useState<string>('auto')
   const [removeFillerWords, setRemoveFillerWords] = useState<boolean>(true)
 

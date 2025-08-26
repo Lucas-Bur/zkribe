@@ -77,7 +77,7 @@ const getOptimizedTranscriptionPrompt = (
 ): string => {
   const { language, removeFillerWords = true } = options
 
-  const languageMap: { [key: string]: string } = {
+  const languageLabelMap: Record<string, string> = {
     de: 'German',
     en: 'English',
     es: 'Spanish',
@@ -90,42 +90,66 @@ const getOptimizedTranscriptionPrompt = (
     zh: 'Chinese',
   }
 
-  const targetLanguage = languageMap[language] || language
+  const languageLabel = languageLabelMap[language] || language
   const isAutoDetect = language === 'auto'
 
   const fillerWordInstructions = removeFillerWords
-    ? `**CRITICAL: REMOVE ALL FILLER WORDS AND HESITATIONS**
-- German: "äh", "ähm", "also", "ja", "ne", "halt", "eben", "sozusagen", "irgendwie"
-- English: "um", "uh", "like", "you know", "I mean", "sort of", "kind of", "actually"
-- Remove false starts, repetitions, and incomplete sentences
-- Clean up stuttering and verbal hesitations
-- Make the text flow naturally without these interruptions`
-    : `**PRESERVE ALL SPEECH PATTERNS**
-- Include all filler words, hesitations, and false starts exactly as spoken
-- Maintain natural speech patterns including "um", "uh", "like", etc.
-- Keep repetitions and incomplete sentences as they occur`
+    ? `FILLER POLICY: REMOVE FILLERS (WITHOUT TRANSLATION OR PARAPHRASING)
+- Remove filler words, false starts, repetitions, and verbal hesitations, but DO NOT translate or change meaning.
+- Examples (non-exhaustive):
+  - German: "äh", "ähm", "also", "ja", "ne", "halt", "eben", "sozusagen", "irgendwie"
+  - English: "um", "uh", "like", "you know", "I mean", "sort of", "kind of", "actually"
+- Clean stutters and hesitations while keeping the remaining text exactly in the language spoken.`
+    : `FILLER POLICY: PRESERVE ALL SPEECH PATTERNS
+- Keep filler words, hesitations, false starts, repetitions exactly as spoken.
+- Do not normalize or paraphrase keep the original wording.`
 
-  return `You are a professional audio transcriber. Transcribe this audio with maximum accuracy.
+  // Few-shot anti-translation guidance helps a lot
+  const fewShotExamples = `EXAMPLES (DO NOT TRANSLATE):
+- Audio: "Also, ich hab das halt so gemacht."
+  Transcript: "Also, ich hab das halt so gemacht."
+- Audio (code-switch): "Heute war standup, then we merged the PR."
+  Transcript: "Heute war standup, then we merged the PR."
+- Audio (unclear): "Er meinte, äh, [unverständlich]"
+  Transcript: "Er meinte, [inaudible]"`
 
-**LANGUAGE:** ${isAutoDetect ? 'Auto-detect the primary language' : `Primarily ${targetLanguage}`}
-- Preserve foreign words, names, and technical terms exactly as spoken
-- Handle code-switching and multilingual content naturally
-- Do NOT translate or "correct" non-target language phrases!
+  return [
+    // Strong, early, unambiguous constraints
+    'You are a professional audio transcriber.',
+    'CRITICAL: TRANSCRIBE ONLY. DO NOT TRANSLATE under any circumstances.',
+    'Keep each utterance in the same language it was spoken. Preserve code-switching exactly.',
+    'If language is unclear, transcribe phonetically or mark as [inaudible]. No paraphrasing, no normalization of language choice.',
 
-${fillerWordInstructions}
+    '',
+    isAutoDetect
+      ? 'LANGUAGE HANDLING: Auto-detect per utterance. Transcribe strictly in the same language as spoken.'
+      : `LANGUAGE HANDLING: Primarily ${languageLabel}. Transcribe strictly in the same language as spoken. Do not translate content from other languages preserve code-switching exactly.`,
 
-**TRANSCRIPTION RULES:**
-- Use proper punctuation, capitalization, and paragraph breaks
-- Mark unclear speech as [inaudible]
-- Mark significant background sounds as [background noise] or [music]
-- Transcribe word-for-word, including any verbal tics, unless explicitly told to remove filler words.
+    '',
+    fillerWordInstructions,
 
-**SPEAKER IDENTIFICATION:**
-- Label multiple speakers as Speaker 1, Speaker 2, etc.
-- Maintain consistent speaker labels throughout
-- Use new lines for speaker changes
+    '',
+    'TRANSCRIPTION RULES:',
+    '- Use proper punctuation, capitalization, and paragraph breaks.',
+    '- Mark unclear speech as [inaudible].',
+    '- Mark significant background sounds as [background noise] or [music].',
+    '- Transcribe word-for-word unless removing fillers as specified above.',
+    '- No translation, no paraphrasing, no summarization.',
 
-Begin transcription:`
+    '',
+    'SPEAKER IDENTIFICATION:',
+    '- Label multiple speakers as Speaker 1, Speaker 2, etc.',
+    '- Maintain consistent speaker labels throughout.',
+    '- Use new lines for speaker changes.',
+
+    '',
+    fewShotExamples,
+    '',
+    'OUTPUT FORMAT: Do NOT wrap the transcription in JSON, XML, YAML, or any other programmatic object/serialization format. Structure the output strictly according to the transcription rules and speaker identification provided, producing only the direct transcription content.',
+
+    '',
+    'Begin transcription:',
+  ].join('\n')
 }
 
 /** === Shared Subschemas === */
