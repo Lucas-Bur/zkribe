@@ -1,4 +1,7 @@
+import GlobalHeader from '@/components/Header'
+import { ThemeProvider } from '@/components/ThemeProvider'
 import { TanstackDevtools } from '@tanstack/react-devtools'
+import type { QueryClient } from '@tanstack/react-query'
 import {
   HeadContent,
   Outlet,
@@ -6,14 +9,10 @@ import {
   createRootRouteWithContext,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-
+import { useEffect } from 'react'
+import { scan } from 'react-scan'
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
-
 import appCss from '../styles.css?url'
-
-import GlobalHeader from '@/components/Header'
-import { ThemeProvider } from '@/components/ThemeProvider'
-import type { QueryClient } from '@tanstack/react-query'
 
 interface MyRouterContext {
   queryClient: QueryClient
@@ -44,6 +43,13 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 })
 
 function RootComponent() {
+  // Make sure to run this only after hydration
+  useEffect(() => {
+    scan({
+      enabled: import.meta.env.MODE === 'development',
+    })
+  }, [])
+
   return (
     <RootDocument>
       <Outlet />

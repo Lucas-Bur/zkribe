@@ -1,0 +1,43 @@
+services:
+  zkribe-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: zkribe-app
+    env_file:
+      - .env
+    restart: always
+    networks:
+      - frontend
+    deploy:
+      replicas: 3
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.zkribe.entrypoints=web'
+      - 'traefik.http.routers.zkribe.rule=Host(`localhost`)'
+      - 'traefik.http.routers.zkribe.service=zkribe-svc'
+      - 'traefik.http.services.zkribe-svc.loadbalancer.server.port=3000'
+
+  zkribe-traefik:
+    image: traefik:v3.5.1
+    restart: always
+    container_name: zkribe-traefik
+    ports:
+      - '80:80'
+      # - '443:443'
+      - '8080:8080'
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --api.dashboard=true
+      - --api.insecure=true # Insecure API aktivieren (für lokales Dashboard)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - zkribe-app
+    networks:
+      - frontend
+
+networks:
+  frontend:

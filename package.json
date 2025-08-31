@@ -13,6 +13,7 @@
     "check": "prettier --write . && eslint --fix"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^2.0.21",
     "@breezystack/lamejs": "^1.2.7",
     "@openrouter/ai-sdk-provider": "^1.1.2",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
@@ -52,8 +53,11 @@
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
     "@vitejs/plugin-react": "^4.3.4",
+    "babel-plugin-react-compiler": "^19.1.0-rc.3",
+    "eslint-plugin-react-hooks": "^6.0.0-rc.2",
     "jsdom": "^26.0.0",
     "prettier": "^3.5.3",
+    "react-scan": "^0.4.3",
     "typescript": "^5.7.2",
     "vite": "^6.3.5",
     "vitest": "^3.0.5",

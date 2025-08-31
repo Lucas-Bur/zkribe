@@ -22,7 +22,7 @@ export const env = createEnv({
    * What object holds the environment variables at runtime. This is usually
    * `process.env` or `import.meta.env`.
    */
-  runtimeEnv: process.env,
+  runtimeEnv: Object.assign({}, process.env, import.meta.env), // Well, this is a hacky way to get the env vars from the .env file
 
   /**
    * By default, this library will feed the environment variables directly to
