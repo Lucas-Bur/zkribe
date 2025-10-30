@@ -10,7 +10,7 @@ services:
     networks:
       - frontend
     deploy:
-      replicas: 3
+      replicas: 1
     labels:
       - 'traefik.enable=true'
       - 'traefik.http.routers.zkribe.entrypoints=web'

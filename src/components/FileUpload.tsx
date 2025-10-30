@@ -133,7 +133,7 @@ export function FileUpload({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Upload className="size-5" />
+          <Upload className="size-5 text-primary" />
           Audiodatei hochladen
         </CardTitle>
         <CardDescription>
@@ -152,20 +152,20 @@ export function FileUpload({
                 <SelectValue>
                   {selectedModel
                     ? (() => {
-                        const selectedOption = modelOptions.find(
-                          (option) => option.value === selectedModel,
+                      const selectedOption = modelOptions.find(
+                        (option) => option.value === selectedModel,
+                      )
+                      if (selectedOption) {
+                        const IconComponent = selectedOption.icon
+                        return (
+                          <div className="flex items-center gap-2">
+                            <IconComponent className="h-4 w-4" />
+                            <span>{selectedOption.mainText}</span>
+                          </div>
                         )
-                        if (selectedOption) {
-                          const IconComponent = selectedOption.icon
-                          return (
-                            <div className="flex items-center gap-2">
-                              <IconComponent className="h-4 w-4" />
-                              <span>{selectedOption.mainText}</span>
-                            </div>
-                          )
-                        }
-                        return 'Wählen Sie ein Modell'
-                      })()
+                      }
+                      return 'Wählen Sie ein Modell'
+                    })()
                     : 'Wählen Sie ein Modell'}
                 </SelectValue>
               </SelectTrigger>
@@ -200,8 +200,8 @@ export function FileUpload({
                 <SelectValue>
                   {selectedLanguage
                     ? languageOptions.find(
-                        (option) => option.value === selectedLanguage,
-                      )?.mainText || 'Sprache auswählen' // Fallback für unbekannten Wert
+                      (option) => option.value === selectedLanguage,
+                    )?.mainText || 'Sprache auswählen' // Fallback für unbekannten Wert
                     : 'Sprache auswählen'}
                 </SelectValue>
               </SelectTrigger>
@@ -405,9 +405,8 @@ export function FileUpload({
               ...
             </>
           ) : (
-            `Transkription starten mit ${
-              modelOptions.find((option) => option.value === selectedModel)
-                ?.mainText
+            `Transkription starten mit ${modelOptions.find((option) => option.value === selectedModel)
+              ?.mainText
             }`
           )}
         </Button>
