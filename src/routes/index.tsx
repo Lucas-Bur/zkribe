@@ -29,7 +29,7 @@ function App() {
   const [isPlayingOriginal, setIsPlayingOriginal] = useState(false)
   const [isPlayingProcessed, setIsPlayingProcessed] = useState(false)
   const [selectedModel, setSelectedModel] = useState<string>(
-    'google/gemini-2.5-flash-lite',
+    'google/gemini-2.5-flash-lite-preview-09-2025',
   )
   const [selectedLanguage, setSelectedLanguage] = useState<string>('auto')
   const [removeFillerWords, setRemoveFillerWords] = useState<boolean>(true)

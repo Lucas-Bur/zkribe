@@ -18,7 +18,9 @@ export const getTranscriptionFn = createServerFn({
       model: z.enum([
         'google/gemini-2.0-flash-001',
         'whisper-1',
-        'google/gemini-2.5-flash-lite',
+        'google/gemini-2.5-flash-lite-preview-09-2025',
+        'google/gemini-2.5-flash-preview-09-2025',
+        'openai/gpt-4o-audio-preview',
       ]),
       language: z.enum([
         'auto',
@@ -507,6 +509,8 @@ async function transcribeWithGemini(
       },
     }),
   })
+
+  console.log('OpenRouter API response status:', resp)
 
   if (!resp.ok) {
     let errorMessage = `HTTP ${resp.status}: ${resp.statusText}`

@@ -24,8 +24,7 @@ import {
   Loader2,
   Pause,
   Play,
-  Speaker,
-  Upload,
+  Upload
 } from 'lucide-react'
 import type React from 'react'
 
@@ -78,30 +77,36 @@ const languageOptions = [
 ] as const
 
 const modelOptions = [
-  {
-    value: 'google/gemini-2.0-flash-001',
-    mainText: 'Gemini 2.0 Flash',
-    subText: 'Vielseitige KI für Text, Bild, Audio',
-    icon: Brain,
-  },
+  // {
+  //   value: 'google/gemini-2.0-flash-001',
+  //   mainText: 'Gemini 2.0 Flash',
+  //   subText: 'Vielseitige KI für Text, Bild, Audio',
+  //   icon: Brain,
+  // },
   // {
   //   value: 'whisper-1',
   //   mainText: 'OpenAI Whisper-1',
   //   subText: 'Spezialisiert auf hochpräzise Spracherkennung',
   //   icon: Mic,
   // },
+  // {
+  //   value: 'openai/gpt-4o-audio-preview',
+  //   mainText: 'OpenAI GPT-4o Audio Preview',
+  //   subText: 'Spezialisiert auf Audio-Transkription',
+  //   icon: Speaker,
+  // },
   {
-    value: 'openai/gpt-4o-audio-preview',
-    mainText: 'OpenAI GPT-4o Audio Preview',
-    subText: 'Spezialisiert auf Audio-Transkription',
-    icon: Speaker,
-  },
-  {
-    value: 'google/gemini-2.5-flash-lite',
+    value: 'google/gemini-2.5-flash-lite-preview-09-2025',
     mainText: 'Gemini 2.5 Flash Lite',
     subText: 'Vielseitige KI für Text, Bild, Audio',
     icon: Brain,
   },
+  // {
+  //   value: 'google/gemini-2.5-flash-preview-09-2025',
+  //   mainText: 'Gemini 2.5 Flash',
+  //   subText: 'Vielseitige KI für Text, Bild, Audio',
+  //   icon: Brain,
+  // },
 ] as const
 
 export function FileUpload({
