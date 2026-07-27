@@ -1,0 +1,5 @@
+allowBuilds:
+  '@openrouter/sdk': true
+peerDependencyRules:
+  allowedVersions:
+    vite: '*'

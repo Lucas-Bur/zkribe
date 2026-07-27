@@ -1,45 +1,26 @@
-# Globale Argumente für API-URLs
-# ARG API_URL_DEV=http://127.0.0.1:8000/api/
-# ARG API_URL_PROD=https://some-domain.com/api/
+FROM node:24-bookworm AS build
 
-# Base-Stage für den gemeinsamen Kontext
-FROM node:22-alpine3.22 AS builder
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
 WORKDIR /app
 
-# Die Argumente in die ENV aufnehmen (dynamisch zur Build-Zeit)
-# ARG API_URL_DEV
-# ARG API_URL_PROD
+RUN corepack enable
 
-# # Die Variable in die ENV aufnehmen (dynamisch zur Build-Zeit)
-# ENV VITE_API_URL_DEV=$API_URL_DEV
-# ENV VITE_API_URL_PROD=$API_URL_PROD
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
 
-# Abhängigkeiten installieren
-COPY package.json package-lock.json ./
-RUN npm ci
-
-# Source-Code kopieren
 COPY . .
+RUN pnpm build
 
-# Build ausführen
-RUN npm run build
+FROM gcr.io/distroless/nodejs24-debian12:nonroot
 
-# Runner-Stage
-FROM node:22-alpine3.22 AS runner
+ENV NODE_ENV=production
+ENV HOST=0.0.0.0
+ENV PORT=3000
 WORKDIR /app
 
-# Die Argumente in die ENV aufnehmen
-# ARG API_URL_DEV
-# ARG API_URL_PROD
+COPY --from=build --chown=nonroot:nonroot /app/.output ./.output
 
-# Die Variable in die ENV aufnehmen
-# ENV VITE_API_URL_DEV=$API_URL_DEV
-# ENV VITE_API_URL_PROD=$API_URL_PROD
-
-# Build-Ergebnis übernehmen
-COPY --from=builder /app/.output .
-
-# Serve installieren und Port freigeben
 EXPOSE 3000
 
-CMD ["node", "server/index.mjs"]
+CMD [".output/server/index.mjs"]

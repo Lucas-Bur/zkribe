@@ -1,26 +1,17 @@
 import tailwindcss from '@tailwindcss/vite'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
-import viteReact from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
-import viteTsConfigPaths from 'vite-tsconfig-paths'
+import react from '@vitejs/plugin-react'
+import { nitro } from 'nitro/vite'
+import { defineConfig } from 'vite-plus'
 
-const config = defineConfig({
-  plugins: [
-    // this is the plugin that enables path aliases
-    viteTsConfigPaths({
-      projects: ['./tsconfig.json'],
-    }),
-    tailwindcss(),
-    tanstackStart({
-      customViteReactPlugin: true,
-      target: 'node-server',
-    }),
-    viteReact({
-      babel: {
-        plugins: ['babel-plugin-react-compiler'],
-      },
-    }),
-  ],
+export default defineConfig({
+  staged: { '*': 'vp check --fix' },
+  fmt: {
+    semi: false,
+    singleQuote: true,
+    trailingComma: 'all',
+    sortPackageJson: true,
+  },
+  lint: { options: { typeAware: true, typeCheck: true } },
+  plugins: [tailwindcss(), tanstackStart(), nitro(), react()],
 })
-
-export default config

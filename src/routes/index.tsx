@@ -1,208 +1,24 @@
-import { FileUpload } from '@/components/FileUpload'
-import { GenerationDetailsCard } from '@/components/GenerationDetails'
-import { TranscriptionResults } from '@/components/TranscriptionResult'
-import { getTranscriptionFn } from '@/fn/transcribe'
-import { compressAudioToOptimizedMp3 } from '@/lib/audio-converter'
 import { createFileRoute } from '@tanstack/react-router'
-import { useRef, useState } from 'react'
+import { TranscriptionWorkbench } from '../transcription/workbench'
 
-export const Route = createFileRoute('/')({
-  component: App,
-})
+export const Route = createFileRoute('/')({ component: Home })
 
-type TranscriptionResponse = Awaited<
-  ReturnType<typeof getTranscriptionFn>
-> | null
-
-function App() {
-  const [file, setFile] = useState<File | null>(null)
-  const [processedFile, setProcessedFile] = useState<File | null>(null)
-  const [isTranscribing, setIsTranscribing] = useState(false)
-  const [isConverting, setIsConverting] = useState(false)
-  const [transcriptionResult, setTranscriptionResult] =
-    useState<TranscriptionResponse>(null)
-  const [error, setError] = useState<string>('')
-  const [originalAudioUrl, setOriginalAudioUrl] = useState<string>('')
-  const [processedAudioUrl, setProcessedAudioUrl] = useState<string>('')
-  const originalAudioRef = useRef<HTMLAudioElement>(null)
-  const processedAudioRef = useRef<HTMLAudioElement>(null)
-  const [isPlayingOriginal, setIsPlayingOriginal] = useState(false)
-  const [isPlayingProcessed, setIsPlayingProcessed] = useState(false)
-  const [selectedModel, setSelectedModel] = useState<string>(
-    'google/gemini-2.5-flash-lite-preview-09-2025',
-  )
-  const [selectedLanguage, setSelectedLanguage] = useState<string>('auto')
-  const [removeFillerWords, setRemoveFillerWords] = useState<boolean>(true)
-
-  const handleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const selectedFile = event.target.files?.[0]
-    if (selectedFile) {
-      if (selectedFile.type.startsWith('audio/')) {
-        setFile(selectedFile)
-        setError('')
-        setTranscriptionResult(null)
-
-        const originalUrl = URL.createObjectURL(selectedFile)
-        setOriginalAudioUrl(originalUrl)
-        setProcessedAudioUrl('')
-        setProcessedFile(null)
-        setIsConverting(true)
-
-        try {
-          const processedFile = await compressAudioToOptimizedMp3(selectedFile)
-          setProcessedFile(processedFile)
-          const processedUrl = URL.createObjectURL(processedFile)
-          setProcessedAudioUrl(processedUrl)
-          setIsConverting(false)
-        } catch (error) {
-          setError(
-            'Error processing audio file. Please try a different format.',
-          )
-          setIsConverting(false)
-          setFile(null)
-          setOriginalAudioUrl('')
-          setProcessedAudioUrl('')
-        }
-      } else {
-        setError('Please select a valid audio file')
-        setFile(null)
-        setOriginalAudioUrl('')
-        setProcessedAudioUrl('')
-      }
-    }
-  }
-
-  const toggleOriginalPlayback = () => {
-    if (originalAudioRef.current) {
-      if (isPlayingOriginal) {
-        originalAudioRef.current.pause()
-      } else {
-        if (isPlayingProcessed && processedAudioRef.current) {
-          processedAudioRef.current.pause()
-        }
-        originalAudioRef.current.play()
-      }
-      setIsPlayingOriginal(!isPlayingOriginal)
-    }
-  }
-
-  const toggleProcessedPlayback = () => {
-    if (processedAudioRef.current) {
-      if (isPlayingProcessed) {
-        processedAudioRef.current.pause()
-      } else {
-        if (isPlayingOriginal && originalAudioRef.current) {
-          originalAudioRef.current.pause()
-        }
-        processedAudioRef.current.play()
-      }
-      setIsPlayingProcessed(!isPlayingProcessed)
-    }
-  }
-
-  const handleTranscribe = async () => {
-    if (!processedFile) {
-      setError('No processed audio file available for transcription.')
-      return
-    }
-
-    setIsTranscribing(true)
-    setError('')
-
-    try {
-      const formdata = new FormData()
-      formdata.append('audio', processedFile)
-      formdata.append('model', selectedModel)
-      formdata.append('language', selectedLanguage)
-      formdata.append(
-        'removeFillerWords',
-        removeFillerWords.valueOf().toString(),
-      )
-      const response = await getTranscriptionFn({ data: formdata })
-      setTranscriptionResult(response)
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Transcription error. Please try again.',
-      )
-    } finally {
-      setIsTranscribing(false)
-    }
-  }
-
-  const downloadTranscription = () => {
-    if (!transcriptionResult?.transcription) {
-      console.warn('Keine Transkriptionsdaten zum Herunterladen.')
-      return
-    }
-
-    const { segments } = transcriptionResult.transcription
-    let formattedText = ''
-
-    segments.forEach((segment) => {
-      const speakerInfo = segment.speaker ? `${segment.speaker}: ` : ''
-      const segmentId = segment.id !== undefined ? `[#${segment.id}] ` : ''
-      const typeInfo =
-        segment.type && segment.type !== 'speech'
-          ? `[${segment.type.replace('_', ' ')}] `
-          : ''
-
-      formattedText += `${speakerInfo}${segmentId}${typeInfo}${segment.text}\n\n`
-    })
-    const blob = new Blob([formattedText], { type: 'text/plain;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `transcription-${file?.name || 'audio'}.txt`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }
-
+function Home() {
   return (
-    <div className="p-4 min-h-[calc(100vh-65px)]">
-      <div className="grid gap-6 md:grid-cols-2">
-        <FileUpload
-          file={file}
-          originalAudioUrl={originalAudioUrl}
-          processedAudioUrl={processedAudioUrl}
-          isConverting={isConverting}
-          error={error}
-          isPlayingOriginal={isPlayingOriginal}
-          isPlayingProcessed={isPlayingProcessed}
-          originalAudioRef={originalAudioRef}
-          processedAudioRef={processedAudioRef}
-          onFileChange={handleFileChange}
-          onToggleOriginalPlayback={toggleOriginalPlayback}
-          onToggleProcessedPlayback={toggleProcessedPlayback}
-          onTranscribe={handleTranscribe}
-          isTranscribing={isTranscribing}
-          processedFile={processedFile}
-          selectedModel={selectedModel}
-          onModelChange={setSelectedModel}
-          selectedLanguage={selectedLanguage}
-          onLanguageChange={setSelectedLanguage}
-          removeFillerWords={removeFillerWords}
-          onRemoveFillerWordsChange={setRemoveFillerWords}
-          setIsPlayingOriginal={setIsPlayingOriginal}
-          setIsPlayingProcessed={setIsPlayingProcessed}
-        />
-
-        <TranscriptionResults
-          transcription={transcriptionResult?.transcription}
-          onDownload={downloadTranscription}
-        />
-      </div>
-      {transcriptionResult?.usage && (
-        <GenerationDetailsCard
-          provider={transcriptionResult.provider}
-          {...transcriptionResult.usage}
-        />
-      )}
-    </div>
+    <main className="mx-auto w-full max-w-7xl p-4 md:p-6">
+      <section className="mb-6 max-w-2xl">
+        <p className="mb-2 text-xs font-bold tracking-[0.16em] text-primary uppercase">
+          Audio rein. Klarer Text raus.
+        </p>
+        <h1 className="mb-3 text-3xl font-bold tracking-tight md:text-4xl">
+          Transkription ohne Umwege.
+        </h1>
+        <p className="leading-relaxed text-muted-foreground">
+          Audio wird lokal für Sprache optimiert und anschließend sicher über OpenRouter
+          transkribiert.
+        </p>
+      </section>
+      <TranscriptionWorkbench />
+    </main>
   )
 }

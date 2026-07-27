@@ -1,5 +1,14 @@
-node_modules
+.git
+.github
 .output
-.nitro
-.env
+.pix
 .tanstack
+.vite-hooks
+.vscode
+dist
+node_modules
+next
+.env
+.env.*
+!.env.example
+*.log
